@@ -1,0 +1,82 @@
+# Output Directory
+./
+# iprd[0:1] (periodic B.C.) 0:No,1:Yes
+ 1 1
+# bounding box Xa[2], Xb[2] (nm)
+ 0.0 0.0 
+ 200.0  200.0
+# Nst (number of sheets)
+ 40 
+# dx ( coarse grain size ) (nm)
+ 1.0 
+# wd, sig(sheet width & characteristic length) (nm)
+ 60.0 
+# stdev*3 ( 3 sigma of wd [%]) 
+ 80.0 
+# mass, imb (particle mass & mobility)
+ 1.0 1
+# iwall[4] ( rigid wall 0: disabled , 1: enabled) 
+ 0 0 0 0 
+# change sig ? (1:yes, 0:No)
+  1
+# sig (characteristic length) null_wd (mass point 1:Yes, 0:No)
+ 1.5 0
+ 2.0 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 2.5 0
+ 2.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+ 1.5 0
+
+
+
+# iprd[0:1] (periodic B.C.) 0:No,1:Yes
+ 1 1
+# bounding box Xa[2], Xb[2] (nm)
+ 0.0 0.0 
+ 200.0  200.0
+# Nst (number of sheets)
+ 40 
+# dx ( coarse grain size ) (nm)
+ 1.0 
+# wd, sig(sheet width & characteristic length) (nm)
+ 60.0 1.5
+# stdev*3 ( 3 sigma of wd [%]) 
+ 80.0 
+# mass, imb (particle mass & mobility)
+ 1.0 1
+# iwall[4] ( rigid wall 0: disabled , 1: enabled) 
+ 0 0 0 0 
