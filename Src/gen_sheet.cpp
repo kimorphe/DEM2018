@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 // ----- CONSTANTS ----
 #define IA 16807
@@ -56,17 +57,45 @@ int main(){
 	double th,wd,wd0,dr,sig,mass,wdh2,dw,std;
 	double sigx,sigy,*sigs;
 	double xwl[4],ywl[4],Xwl[4],Ywl[4];
-	char cbff[128];
+	char cbff[128],fname[128],Dir0[128];
 	double a1,a2,b1,b2,cost,sint;
 
+	char fn1[128]="ptc.dat";
+	char fn2[128]="sheet.dat";
+	char fn3[128]="gen_sheet.out";
+	char fn4[128]="bbox.dat";
 
 
 //	-------- OPEN FIELS ----------
-	FILE *fp=fopen("bbox.dat","w");
 	FILE *fp0=fopen("gen_sheet.inp","r");
+		fgets(Dir0,128,fp0);
+		fgets(Dir0,128,fp0);
+		int nchar=strlen(Dir0);
+		Dir0[nchar-1]=int(NULL);
+
+
+		strcpy(fname,Dir0); strcat(fname,fn1);
+		puts(fname);
+		FILE *fp1=fopen(fname,"w");
+
+		strcpy(fname,Dir0); strcat(fname,fn2);
+		puts(fname);
+		FILE *fp2=fopen(fname,"w");
+
+		strcpy(fname,Dir0); strcat(fname,fn3);
+		puts(fname);
+		FILE *fp3=fopen(fname,"w");
+
+		strcpy(fname,Dir0); strcat(fname,fn4);
+		puts(fname);
+		FILE *fp4=fopen(fname,"w");
+/*
 	FILE *fp1=fopen("ptc.dat","w");
 	FILE *fp2=fopen("sheet.dat","w");
 	FILE *fp3=fopen("gen_sheet.out","w");
+	FILE *fp4=fopen("bbox.dat","w");
+	scanf("pause %s",cbff);
+*/
 
 	if(fp0 == NULL){
 		printf("Can't find gen_sheet.inp \n");
@@ -94,12 +123,12 @@ int main(){
 		xwl[2]=Xc[0]; ywl[2]=Xb[1]; imb_wall[2]=-3;
 		xwl[3]=Xa[0]; ywl[3]=Xc[1]; imb_wall[3]=-2;
 
-		fprintf(fp,"%lf %lf\n",Xa[0],Xa[1]);
-		fprintf(fp,"%lf %lf\n",Xb[0],Xa[1]);
-		fprintf(fp,"%lf %lf\n",Xb[0],Xb[1]);
-		fprintf(fp,"%lf %lf\n",Xa[0],Xb[1]);
-		fprintf(fp,"%lf %lf\n",Xa[0],Xa[1]);
-		fclose(fp);
+		fprintf(fp4,"%lf %lf\n",Xa[0],Xa[1]);
+		fprintf(fp4,"%lf %lf\n",Xb[0],Xa[1]);
+		fprintf(fp4,"%lf %lf\n",Xb[0],Xb[1]);
+		fprintf(fp4,"%lf %lf\n",Xa[0],Xb[1]);
+		fprintf(fp4,"%lf %lf\n",Xa[0],Xa[1]);
+		fclose(fp4);
 
 	fgets(cbff,128,fp0);
 	fscanf(fp0,"%d\n",&Nst);	// number of sheets

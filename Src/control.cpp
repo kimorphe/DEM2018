@@ -21,6 +21,9 @@ void CNTRL :: load(char *fname){
 	if(fp==NULL) show_msg(fname);
 	
 	fgets(cbff,128,fp);
+	fgets(Dir,128,fp);
+
+	fgets(cbff,128,fp);
 	fscanf(fp,"%d\n",&rstat);
 	fgets(cbff,128,fp);
 	fscanf(fp,"%s\n",fnrst);
@@ -57,7 +60,8 @@ void CNTRL :: load(char *fname){
 
 		if(prd > 0){
 			FILE *ftmp=fopen("bbox.dat","r");
-			if(ftmp == NULL) show_msg("bbox.dat");
+			strcpy(cbff,"bbox.dat");
+			if(ftmp == NULL) show_msg(cbff);
 			fscanf(ftmp,"%lf %lf\n",Xa,Xa+1);
 			fgets(cbff,128,ftmp);
 			fscanf(ftmp,"%lf %lf\n",Xb,Xb+1);

@@ -21,20 +21,44 @@ double vfac(double TK, double T0, double T1, double t_now, double t_start, doubl
 	if(Vfac > 1.10) Vfac=1.10;
 	return(Vfac);
 };
+void join_chars( char *str1, char *str2 , char *str_out);
+void join_chars( char *str1, char *str2 );
 
 int main(){
 
 	double PI=4.0*atan(1.0);
+	char fninp[128]="dem.inp";	// General DEM parameters
 
-	char fninp[]="dem.inp";	// General DEM parameters
-	char fnptc[]="ptc.dat";	// Particle Data
-	char fnsht[]="sheet.dat";// Clay Sheet Data
-	char fnump[]="ptc_nums.dat"; // particle number/sheet 
+
+
+	char fnptc[128]="ptc.dat";	// Particle Data
+	char fnsht[128]="sheet.dat";// Clay Sheet Data
+	char fnump[128]="ptc_nums.dat"; // particle number/sheet 
 	char fname[128],cbff[128];
 
+	char fnerg[128]="energy.out";
+	char fnstr[128]="stress.out";
+	char fnptcl[128]="ptcl.out";
+
+	//char Dir[]="../\n";
+//	------------- READ DEM PARAMETERS -------------
+	CNTRL prms;
+	prms.load(fninp);
+	puts(prms.Dir);
+
+	join_chars(prms.Dir,fnerg);
+	join_chars(prms.Dir,fnstr);
+	join_chars(prms.Dir,fnptcl);
+	join_chars(prms.Dir,fnump);
+
+	puts(fnerg);
+	puts(fnstr);
+	puts(fnptcl);
+	puts(fnump);
+
 	FILE *fp,*ftmp;
-	FILE *ferg=fopen("energy.out","w");
-	FILE *fstr=fopen("stress.out","w");
+	FILE *ferg=fopen(fnerg,"w");
+	FILE *fstr=fopen(fnstr,"w");
 
 	double Sab[2][2],dS1[2][2],dS2[2][2];
 	double m0;
@@ -62,11 +86,10 @@ int main(){
 
 	SHEET *st;
 	PRTCL *PTC,pt;
-	CNTRL prms;
 	REV rev;
 	WALL wll;
 
-	FILE *fpl_out=fopen("ptcl.out","w");
+	FILE *fpl_out=fopen(fnptcl,"w");
 
 //	------------  READ WALL DISPALACEMENT DATA -------------
 	wll.setup();
@@ -112,14 +135,15 @@ int main(){
 	Wmax[1]=Ymax-Ymin;
 	fclose(fp);
 
-//	------------- READ DEM PARAMETERS -------------
-	prms.load(fninp);
+//	------------------ DEM PARAMETERS -------------
+	//prms.load(fninp);
 	ninc=prms.Nt/prms.Nout;
 	prms.np=np;
 	if(ninc ==0) ninc=1;
 	i0_T_start=int(prms.time_T_start/prms.dt);
 	if(i0_T_start < 1) i0_T_start=1;
 //	------------  READ AGGREGATE DATA -------------
+	puts(fnump);
 	ftmp=fopen(fnump,"w");
 	fp=fopen(fnsht,"r");
 	if(fp == NULL) show_msg(fnsht);
@@ -163,7 +187,7 @@ int main(){
 	rho_d=Mtot/rev.Vol*1.e27*1.e-03;
 	pr=1.0-np*1.0*1.0/rev.Vol;
 
-	save_ptc_data(0,0.0,rho_d,pr,rev,np,PTC,nst,st);
+	save_ptc_data(0,0.0,rho_d,pr,rev,np,PTC,nst,st,prms.Dir);
 	printf("\n");
 	fprintf(fpl_out,"%d\n",npl);
 	for(j=0;j<npl;j++) fprintf(fpl_out,"%lf\n",PTC[indx[j]].sig);
@@ -245,7 +269,7 @@ int main(){
 		if(i%ninc ==0){ 
 			isum++;
 			tt=i*prms.dt;
-			save_ptc_data(isum,tt,rho_d,pr,rev,np,PTC,nst,st);
+			save_ptc_data(isum,tt,rho_d,pr,rev,np,PTC,nst,st,prms.Dir);
 			printf("( %le[g/cm3] )\n",rho_d);
 
 			for(j=0;j<npl;j++){
@@ -320,7 +344,7 @@ int main(){
 	}	// Time Step (END)
 
 	isum++;
-	save_ptc_data(isum,prms.dt*prms.Nt,rho_d,pr,rev,np,PTC,nst,st);
+	save_ptc_data(isum,prms.dt*prms.Nt,rho_d,pr,rev,np,PTC,nst,st,prms.Dir);
 
 	return(0);
 } 
@@ -339,7 +363,8 @@ void print_ptc(
 	double tt,	// time 
 	REV rev,	// unit cell 
 	double rho_d,	// dry density
-	double pr	// porosity	
+	double pr,	// porosity	
+	char *Dir	// Output data directory
 ){
 	int j,ir0,ir1;
 	char fname[128];
@@ -348,6 +373,7 @@ void print_ptc(
 
 
 	sprintf(fname,"x%d.dat",isum);
+	join_chars(Dir,fname);
 	printf(" %s\n",fname);
 	fp=fopen(fname,"w");
 
@@ -421,15 +447,16 @@ void save_ptc_data(
 	int np,		// number of particles
 	PRTCL *PTC,	// particle data
 	int nst,	// number of sheets
-	SHEET *st	// sheet
+	SHEET *st,	// sheet
+	char *Dir	// Output data directory
 ){
 	int j;
-	//FILE *fp=fopen("restart.dat","w");
 	FILE *fp;
 
 //	----------
 	char fname[128];
 	sprintf(fname,"x%d.dat",isum);
+	join_chars(Dir,fname);
 	printf("%s ",fname);
 	fp=fopen(fname,"w");
 	fprintf(fp,"# time [pico sec]\n");
@@ -513,4 +540,24 @@ void restart(
 		st[i].r2=r2; 
 	}
 	fclose(fp);
+};
+
+void join_chars( char *str1, char *str2 ){
+	int nchar=strlen(str1);
+	if( str1[nchar-1]=='\n') str1[nchar-1]=int(NULL);
+	char tmp[128];
+
+	strcpy(tmp,str1);
+	strcat(tmp,str2);
+	strcpy(str2,tmp);
+
+};
+
+void join_chars( char *str1, char *str2 , char *str_out){
+
+	int nchar=strlen(str1);
+	if( str1[nchar-1]=='\n') str1[nchar-1]=int(NULL);
+
+	strcpy(str_out,str1);
+	strcat(str_out,str2);
 };

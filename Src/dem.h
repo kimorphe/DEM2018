@@ -54,6 +54,7 @@ class Curve2D{	// plane (2D) curve
 
 class CNTRL{	// DEM implementation controle parameters
 	public:
+		char Dir[128];	// Output Data Directory
 		int Nout;	// number of output steps 
 		int Nt;		// total time steps
 		int np;		// number of particles
@@ -277,7 +278,8 @@ void print_ptc(
 	double dt,	// time increment 
 	REV rev,	// unit cell
 	double rho_d,	// dry density
-	double pr	// porosity 
+	double pr,	// porosity 
+	char *Dir	// Output data directory
 );
 void regist_ptc(
 	REV rev,	// REV class
@@ -313,7 +315,8 @@ void save_ptc_data(
 	int np,		// number of particles
 	PRTCL *PTC,	// particle data
 	int nst,	// number of sheets
-	SHEET *st	// sheet
+	SHEET *st,	// sheet
+	char *Dir	// output data directory
 );
 void restart(
 	CNTRL *prms,
