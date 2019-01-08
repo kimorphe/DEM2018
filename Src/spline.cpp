@@ -40,6 +40,12 @@ void Curve2D::print(){
 	};
 	puts("-----------------------------");
 }
+void Curve2D::print(char *fname){
+	FILE *fp=fopen(fname,"a");
+	for(int i=0;i<np;i++) fprintf(fp,"%lf %lf\n",x[i],y[i]);
+	fprintf(fp,"\n");
+	fclose(fp);
+};
 
 void Curve2D::spline(){
 

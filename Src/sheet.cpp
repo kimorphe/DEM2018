@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include "dem.h"
 #include "MT.h"
@@ -233,11 +234,40 @@ void Set_Vel(PRTCL *PT, SHEET *st,CNTRL prms){
 void SHEET::xy2crv(REV rev, PRTCL *PTC){
 	int i,ipt;
 	Vec2 xf;
+	Curve2D crv;
+	crv.init(Np);
 	for(i=0;i<Np;i++){
 		ipt=list[i];
-		xf.set(PTC[ipt].x);
-	//	crv.x[i]=PTC[ipt].x[0]+PTC[ipt].rev.;
-		crv.y[i]=PTC[ipt].x[1];
+		xf=rev.unfold(PTC[ipt].x,PTC[ipt].irev);
+		crv.x[i]=xf.x[0];
+		crv.y[i]=xf.x[1];
 	}
+	crv.spline();
+	//char cbff[128];
+	//strcpy(cbff,"xydat.out");
+	//crv.print(cbff);
+
+	double s,rr,dxds,dyds;
+	for(i=0;i<Np;i++){
+		ipt=list[i];
+		s=(double)i;
+		xf.x[0]=-crv.dyds(s);
+		xf.x[1]=crv.dxds(s);
+		rr=xf.len();
+		xf=xf.div(rr);
+		PTC[ipt].nx[0]=xf.x[0];
+		PTC[ipt].nx[1]=xf.x[1];
+		//printf("%lf %lf\n",PTC[ipt].nx[0],PTC[ipt].nx[1]);
+	}
+/*
+	Vec2 yf0,yf1;
+	yf0.set(PTC[list[0]].x);	
+	yf1.set(PTC[list[1]].x);	
+	yf0=vdiff(yf1,yf0);
+	yf0.print();
+	printf("<n,t>=%lf\n",iprod(yf0,xf));
+	printf("\n");
+*/
+
 };
 

@@ -40,12 +40,9 @@ int main(){
 	char fnstr[128]="stress.out";
 	char fnptcl[128]="ptcl.out";
 
-	//char Dir[]="../\n";
 //	------------- READ DEM PARAMETERS -------------
 	CNTRL prms;
 	prms.load(fninp);
-	puts(prms.Dir);
-
 	join_chars(prms.Dir,fnerg);
 	join_chars(prms.Dir,fnstr);
 	join_chars(prms.Dir,fnptcl);
@@ -121,7 +118,10 @@ int main(){
 		PTC[i].irev[0]=i0;
 		PTC[i].irev[1]=i1;
 		if( sig > 10.0) npl++;
-		PTC[i].sig=sig;
+		//PTC[i].sig=sig;
+		PTC[i].sig=1.0;
+		PTC[i].sigs[0]=sig;
+		PTC[i].sigs[1]=sig;
 	}
 
 	int *indx=(int *)malloc(sizeof(int)*npl);
@@ -178,6 +178,8 @@ int main(){
 	rev.setup(prms,wll);	// setup unit cell
 	rev.update(0,prms.dt,wll);
 	rev.print();		// print REV parameters
+	for(i=0;i<nst;i++) st[i].xy2crv(rev,PTC);
+
 
 //	----------------------------------------------
 	

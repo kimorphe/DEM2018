@@ -142,6 +142,7 @@ double VDF(
 	int idiff;
 	double dFn[2],UE=0.0;
 	double dSab[2][2];
+	double sigi,sigj;
 
 	Nx[0]=rev.Nh[0];
 	Nx[1]=rev.Nh[1];
@@ -191,10 +192,13 @@ double VDF(
 			if(ipt==jpt) continue;
 			idiff=abs(PTC[ipt].ipt-PTC[jpt].ipt);
 
-			//if(PTC[ipt].ist==PTC[jpt].ist && idiff < 2) continue; 
-			if(PTC[ipt].ist==PTC[jpt].ist && idiff < 4) continue; 
-
-			sig=0.5*(PTC[ipt].sig+PTC[jpt].sig);
+			if(PTC[ipt].ist==PTC[jpt].ist && idiff < 2) continue; 
+			//if(PTC[ipt].ist==PTC[jpt].ist && idiff < 4) continue; 
+			//
+			sigi=PTC[ipt].get_sig(PTC[jpt].x);
+			sigj=PTC[jpt].get_sig(PTC[ipt].x);
+			//sig=0.5*(PTC[ipt].sig+PTC[jpt].sig);
+			sig=0.5*(sigi+sigj);
 			UE+=LJ(PTC[ipt],PTC[jpt],dFn,sig,Eps,rev,iofst,jofst,dSab,3);
 			PTC[ipt].F[0]+=dFn[0];
 			PTC[ipt].F[1]+=dFn[1];

@@ -110,3 +110,31 @@ double PRTCL :: KE(double m0){	// Kinetic energy
 
 	return(dKE);
 };
+double PRTCL::get_sig(double xf[2]){
+
+	Vec2 yf1,yf0;	// use Vec2 instances
+
+	yf0.set(x);	// register particle coordinate
+	yf1.set(xf);	// register field point 
+
+	yf0=vdiff(yf1,yf0); // get relative position vector
+	double rr=yf0.len(); // vector length
+	yf0=yf0.div(rr); // make vector length unity 
+
+	double mt,mn;
+
+	yf1.x[0]= nx[1];	// tangential vector
+	yf1.x[1]=-nx[0];	// tangential vector
+	mt=iprod(yf0,yf1); // tangential compoonent
+
+	yf1.x[0]= nx[0];	// tangential vector
+	yf1.x[1]= nx[1];	// tangential vector
+	mn=iprod(yf0,yf1); // normal component
+
+
+	double st=mt/sig;
+	double sn=mn/sigs[0];
+	if(sn < 0.0) sn=mn/sigs[1];
+	return(1./sqrt(st*st+sn*sn));
+
+};

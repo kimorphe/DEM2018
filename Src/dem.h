@@ -43,6 +43,7 @@ class Curve2D{	// plane (2D) curve
 		double *by,*cy,*dy; // cubic spline coefficients for y
 		void init(int N); // initialize instance (must be called firstly)
 		void print(); // print data 
+		void print(char *fname); // print data 
 		void spline(); // obtain spline coefficients
 		double intplx(double s); // interpolate x(s) for s in (0, np-1)
 		double intply(double s); // interpolate y(s) for s in (0, np-1)
@@ -159,11 +160,13 @@ class PRTCL{
 	public:
 		int mobile;	// 1 for mobile, 0 for immobile particle
 		double x[2];	// position
+		double nx[2];	// normal vector
 		double v[2];	// velocity
 		double F[2];	// force vector
 		double m;	// mass
 		int irev[2];	// cell index 
 		double sig;	// characteristic distance
+		double sigs[2]; // characteristic distances (top,bottom)
 		void init();	// initialize class instance
 		void setX(double x1, double x2); // set position vector
 		void setX(double x1, double x2, REV rev, CNTRL prms); // set position vector
@@ -173,6 +176,7 @@ class PRTCL{
 		int ist;	// sheet No.
 		int ipt;	// particle No.
 		double KE(double m0);
+		double get_sig(double xf[2]);
 	private:
  };
 
@@ -202,10 +206,6 @@ class SHEET{
 		double incN(PRTCL *PTC, REV rev, double Sab[2][2]);	// increment axial force
 		double incQ(PRTCL *PTC, REV rev, double Sab[2][2]);	// increment bending force
 		void set_vel(PRTCL *PTC, double vx, double vy);		// set velocity vector 
-	//	double incN(PRTCL *PTC, double *Wd);	// increment axial force
-//		double incQ(PRTCL *PTC, double *Wd);	// increment bending force
-//		double VanDerWaals(PRTCL *PTC, double *Wd); // intra-sheet van-der Waals force
-//		double VanDerWaals_Periodic(PRTCL *PTC, CNTRL prms);
 		Curve2D crv;
 		void xy2crv(REV rev,PRTCL *PTC);
 	private:
