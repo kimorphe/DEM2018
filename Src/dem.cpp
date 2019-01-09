@@ -205,6 +205,9 @@ int main(){
 	Sab_smp[1][1]=0.0;
 	isum=0;
 
+	ftmp=fopen("erg.out","w");
+
+
 	SUBCELL *sbcll;
 	for(i=1;i<=prms.Nt;i++){	// Time Step (START) 
 
@@ -292,6 +295,16 @@ int main(){
 		fprintf(ferg,"%le %le %le %le %le %le %le\n",i*prms.dt,KE,UE,rev.Wd[0],rev.Wd[1],TK,rev.Tb);
 		fprintf(fstr,"%le %le %le %le %le ",i*prms.dt,rev.Wd[0],rev.Wd[1],rev.Wd[2],rev.Wd[3]);
 		fprintf(fstr,"%le %le %le ",Sab[0][0]*m0,Sab[1][0]*m0,Sab[1][1]*m0);
+		fprintf(ftmp,"%le %le",PTC[0].UE[0],PTC[0].UE[1]);
+		fprintf(ftmp," %le %le",PTC[20].UE[0],PTC[20].UE[1]);
+		fprintf(ftmp," %le %le",PTC[100].UE[0],PTC[100].UE[1]);
+
+		double dUE=VarUE(rev,sbcll,PTC,prms.iprd,prms.sig,prms.Eps,20,0,-0.5); //*2.*prms.Eps0;
+		//printf("dUE=%lf\n",)
+		fprintf(ftmp," %le\n",dUE);
+
+
+
 
 		if((ismp%nsmp)==0){
 			dsxx=rev.sxx-rev.sxxb*m0;
@@ -428,6 +441,7 @@ void regist_ptc(
 			printf("x,Xa,hd=%lf %lf %lf\n",PTC[i].x[0],rev.Xa[0],rev.hd[0]);
 			exit(-1);
 		}
+		PTC[i].sbcll=l;
 		j=sbcll[l].np;	// sbcll[l].np is supposed to be cleared by SUBCELL.setup(...);
 		if(j>=sbcll[l].np_max || j<0){
 			puts("too many particles for one cell!");

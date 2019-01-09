@@ -110,7 +110,7 @@ double PRTCL :: KE(double m0){	// Kinetic energy
 
 	return(dKE);
 };
-double PRTCL::get_sig(double xf[2]){
+double PRTCL::get_sig(double xf[2], int *sgn_xf, double dsig[2]){
 
 	Vec2 yf1,yf0;	// use Vec2 instances
 
@@ -133,8 +133,12 @@ double PRTCL::get_sig(double xf[2]){
 
 
 	double st=mt/sig;
-	double sn=mn/sigs[0];
-	if(sn < 0.0) sn=mn/sigs[1];
+	double sn=mn/(sigs[0]+dsig[0]);
+	*sgn_xf=0;	// xf is located above this molecule 
+	if(sn < 0.0){
+	       sn=mn/(sigs[1]+dsig[1]);
+	       *sgn_xf=1;	// xf is located below this molecule
+	}
 	return(1./sqrt(st*st+sn*sn));
 
 };

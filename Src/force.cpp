@@ -139,10 +139,12 @@ double VDF(
 	int nsub=rev.nsub;
 	SUBCELL sbci,sbcj;
 	int Nx[2];
-	int idiff;
-	double dFn[2],UE=0.0;
+	int idiff,isgn;
+	double dFn[2],UE=0.0,dUE;
 	double dSab[2][2];
 	double sigi,sigj;
+	double dsig[2];
+	dsig[0]=0.0; dsig[1]=0.0;
 
 	Nx[0]=rev.Nh[0];
 	Nx[1]=rev.Nh[1];
@@ -159,6 +161,8 @@ double VDF(
 		iy=i%Nx[1];	// 2D cell index 2
 		for(ip=0; ip<npi; ip++){ // PARTICLE_i 
 			ipt=sbci.list[ip];
+			PTC[ipt].UE[0]=0.0;
+			PTC[ipt].UE[1]=0.0;
 		for(jx=-1; jx<2; jx++){
 			jofst[0]=0; 
 			Jx=ix+jx;
@@ -195,11 +199,13 @@ double VDF(
 			if(PTC[ipt].ist==PTC[jpt].ist && idiff < 2) continue; 
 			//if(PTC[ipt].ist==PTC[jpt].ist && idiff < 4) continue; 
 			//
-			sigi=PTC[ipt].get_sig(PTC[jpt].x);
-			sigj=PTC[jpt].get_sig(PTC[ipt].x);
+			sigj=PTC[jpt].get_sig(PTC[ipt].x,&isgn,dsig);
+			sigi=PTC[ipt].get_sig(PTC[jpt].x,&isgn,dsig);
 			//sig=0.5*(PTC[ipt].sig+PTC[jpt].sig);
 			sig=0.5*(sigi+sigj);
-			UE+=LJ(PTC[ipt],PTC[jpt],dFn,sig,Eps,rev,iofst,jofst,dSab,3);
+			dUE=LJ(PTC[ipt],PTC[jpt],dFn,sig,Eps,rev,iofst,jofst,dSab,3);
+			UE+=dUE;
+			PTC[ipt].UE[isgn]+=dUE;
 			PTC[ipt].F[0]+=dFn[0];
 			PTC[ipt].F[1]+=dFn[1];
 			Sab[0][0]+=dSab[0][0];
@@ -211,6 +217,101 @@ double VDF(
 		} // PARTILCE_i
 	} // SUBCELL_i
 	return(UE);
+};
+//-----------------------------------------------------------------------------
+double VarUE(
+	REV rev, 
+	SUBCELL *sbcll, 
+	PRTCL *PTC, 
+	int iprd[2],
+	double sig, double Eps,
+	//,double Sab[2][2]
+	int ipt,	// particle number to be perturbed
+	int iside,	// side (0:top, 1: bottom)
+	double var_sig	// amount of water taken/supplied
+){
+	int i,ix,iy,ip;
+	//,ipt;
+	int j,jx,jy,jp,jpt;
+	int Jx,Jy;
+	int npi,npj;
+	int iofst[2],jofst[2];
+	int nsub=rev.nsub;
+	SUBCELL sbci,sbcj;
+	int Nx[2];
+	int idiff,isgn;
+	double UE[2],dUE;
+	double dFn[2],dSab[2][2];
+	double sigi,sigj;
+	double dsig[2],dsig0[2];
+
+	dsig[0]=0.0;
+	dsig[1]=0.0;
+	dsig0[0]=0.0;
+	dsig0[1]=0.0;
+	dsig[iside]=var_sig;
+
+	Nx[0]=rev.Nh[0];
+	Nx[1]=rev.Nh[1];
+
+	iofst[0]=0; iofst[1]=0;
+
+//	for(i=0;i<nsub;i++){	// SUBCELL_i
+	
+		i=PTC[ipt].sbcll;
+		sbci=sbcll[i];
+		npi=sbci.np;
+		ix=i/Nx[1];	// 2D cell index 1
+		iy=i%Nx[1];	// 2D cell index 2
+//		for(ip=0; ip<npi; ip++){ // PARTICLE_i 
+//			ipt=sbci.list[ip];
+		UE[0]=0.0;
+		UE[1]=0.0;
+		for(jx=-1; jx<2; jx++){
+			jofst[0]=0; 
+			Jx=ix+jx;
+			if(Jx < 0){
+				Jx+=Nx[0];
+				jofst[0]=-1;
+			}
+			if(Jx >= Nx[0]){
+				Jx-=Nx[0];
+				jofst[0]=1;
+			}
+			if(jofst[0] !=0 && iprd[0]==0) continue;
+		for(jy=-1; jy<2; jy++){
+			Jy=iy+jy;
+			jofst[1]=0;
+			if(Jy < 0){
+				Jy+=Nx[1];
+				jofst[1]=-1;
+			}
+			if(Jy >= Nx[1]){
+				 Jy-=Nx[1];
+				jofst[1]=1;
+			}
+			if(jofst[1] !=0 && iprd[1]==0) continue;
+
+			j=Jx*Nx[1]+Jy; // get 1D subcell index
+			sbcj=sbcll[j];	
+			npj=sbcj.np;
+		for(jp=0;jp<npj; jp++){ // PARTICLE_j
+			jpt=sbcj.list[jp];
+			if(ipt==jpt) continue;
+			idiff=abs(PTC[ipt].ipt-PTC[jpt].ipt);
+
+			if(PTC[ipt].ist==PTC[jpt].ist && idiff < 2) continue; 
+			sigj=PTC[jpt].get_sig(PTC[ipt].x,&isgn,dsig0);
+			sigi=PTC[ipt].get_sig(PTC[jpt].x,&isgn,dsig);
+			sig=0.5*(sigi+sigj);
+			dUE=LJ(PTC[ipt],PTC[jpt],dFn,sig,Eps,rev,iofst,jofst,dSab,3);
+			UE[isgn]+=dUE;
+		}	// PARTILCE_j
+		}
+		}
+//		} // PARTILCE_i
+//	} // SUBCELL_i
+	return(UE[iside]-PTC[ipt].UE[iside]);
 };
 //-----------------------------------------------------------------------------
 double VDF_L(

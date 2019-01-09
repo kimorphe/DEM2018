@@ -1,5 +1,5 @@
-g++ -o dem dem.cpp force.cpp control.cpp prtcl2d.cpp sheet.cpp vec2.cpp spline.cpp
-g++ -o gen_sheet gen_sheet.cpp
+icc -o dem dem.cpp force.cpp control.cpp prtcl2d.cpp sheet.cpp vec2.cpp spline.cpp
+icc  -o gen_sheet gen_sheet.cpp
 
 mv dem  ../
 mv gen_sheet  ../

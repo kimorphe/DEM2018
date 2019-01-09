@@ -167,6 +167,8 @@ class PRTCL{
 		int irev[2];	// cell index 
 		double sig;	// characteristic distance
 		double sigs[2]; // characteristic distances (top,bottom)
+		double UE[2];	// Pontential Energy (due associated with top/bottom side)
+		int sbcll;	// subcell No.
 		void init();	// initialize class instance
 		void setX(double x1, double x2); // set position vector
 		void setX(double x1, double x2, REV rev, CNTRL prms); // set position vector
@@ -176,7 +178,7 @@ class PRTCL{
 		int ist;	// sheet No.
 		int ipt;	// particle No.
 		double KE(double m0);
-		double get_sig(double xf[2]);
+		double get_sig(double xf[2],int *sgn_xf,double dsig[2]);
 	private:
  };
 
@@ -295,6 +297,16 @@ double VDF(	// Van der Waals Force (cell-based evaluation)
 	double sig,	// characteristic length
 	double Eps,	// potential amplitude
 	double Sab[2][2] // mechanical stress
+);
+double VarUE(
+	REV rev, 
+	SUBCELL *sbcll, 
+	PRTCL *PTC, 
+	int iprd[2],
+	double sig, double Eps,
+	int ipt,
+	int iside,
+	double var_sig
 );
 double VDF_L(
 	REV rev, 	// REV
