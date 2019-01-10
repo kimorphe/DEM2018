@@ -225,46 +225,56 @@ double VarUE(
 	PRTCL *PTC, 
 	int iprd[2],
 	double sig, double Eps,
-	//,double Sab[2][2]
-	int ipt,	// particle number to be perturbed
-	int iside,	// side (0:top, 1: bottom)
+	int ipts[2],	// perturbed particles 
+	int isds[2], 	// side (0:top, 1: bottom)
 	double var_sig	// amount of water taken/supplied
 ){
-	int i,ix,iy,ip;
-	//,ipt;
-	int j,jx,jy,jp,jpt;
+	int i,ix,iy,ip,ipt;
+	int j,jx,jy,jp,jpt,jpt0;
 	int Jx,Jy;
 	int npi,npj;
 	int iofst[2],jofst[2];
 	int nsub=rev.nsub;
 	SUBCELL sbci,sbcj;
 	int Nx[2];
-	int idiff,isgn;
+	int idiff,isgn,iside;
 	double UE[2],dUE;
 	double dFn[2],dSab[2][2];
 	double sigi,sigj;
-	double dsig[2],dsig0[2];
+	double dsig0[2],dsig1[2],dsig2[2];
+	double *dsigi,*dsigj;
+	double *sigs[2];
 
-	dsig[0]=0.0;
-	dsig[1]=0.0;
-	dsig0[0]=0.0;
-	dsig0[1]=0.0;
-	dsig[iside]=var_sig;
+	for(j=0;j<2;j++){
+		dsig0[j]=0.0;
+		dsig1[j]=0.0;
+		dsig2[j]=0.0;
+	};
+
+	dsig1[isds[0]]= var_sig;
+	dsig2[isds[1]]=-var_sig;
+
+	sigs[0]=dsig1;
+	sigs[1]=dsig2;
 
 	Nx[0]=rev.Nh[0];
 	Nx[1]=rev.Nh[1];
 
 	iofst[0]=0; iofst[1]=0;
 
-//	for(i=0;i<nsub;i++){	// SUBCELL_i
-	
+	double uvar=0.0;
+	for(int k=0;k<2;k++){	// perturbed pair of particles
+
+		ipt=ipts[k];
+		jpt0=ipts[(k+1)%2];
+		iside=isds[k];
+		dsigi=sigs[k];
+
 		i=PTC[ipt].sbcll;
 		sbci=sbcll[i];
 		npi=sbci.np;
 		ix=i/Nx[1];	// 2D cell index 1
 		iy=i%Nx[1];	// 2D cell index 2
-//		for(ip=0; ip<npi; ip++){ // PARTICLE_i 
-//			ipt=sbci.list[ip];
 		UE[0]=0.0;
 		UE[1]=0.0;
 		for(jx=-1; jx<2; jx++){
@@ -301,17 +311,21 @@ double VarUE(
 			idiff=abs(PTC[ipt].ipt-PTC[jpt].ipt);
 
 			if(PTC[ipt].ist==PTC[jpt].ist && idiff < 2) continue; 
-			sigj=PTC[jpt].get_sig(PTC[ipt].x,&isgn,dsig0);
-			sigi=PTC[ipt].get_sig(PTC[jpt].x,&isgn,dsig);
+			dsigj=dsig0;
+			if(jpt==jpt0) dsigj=sigs[(k+1)%2];
+			sigj=PTC[jpt].get_sig(PTC[ipt].x,&isgn,dsigj);
+			sigi=PTC[ipt].get_sig(PTC[jpt].x,&isgn,dsigi);
 			sig=0.5*(sigi+sigj);
 			dUE=LJ(PTC[ipt],PTC[jpt],dFn,sig,Eps,rev,iofst,jofst,dSab,3);
 			UE[isgn]+=dUE;
 		}	// PARTILCE_j
 		}
 		}
-//		} // PARTILCE_i
-//	} // SUBCELL_i
-	return(UE[iside]-PTC[ipt].UE[iside]);
+		uvar+=(UE[iside]-PTC[ipt].UE[iside]);
+	}
+	//return(UE[iside]-PTC[ipt].UE[iside]);
+	return(uvar);
+
 };
 //-----------------------------------------------------------------------------
 double VDF_L(

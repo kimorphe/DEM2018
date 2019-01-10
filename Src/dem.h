@@ -304,8 +304,8 @@ double VarUE(
 	PRTCL *PTC, 
 	int iprd[2],
 	double sig, double Eps,
-	int ipt,
-	int iside,
+	int ipts[2],
+	int isds[2],
 	double var_sig
 );
 double VDF_L(

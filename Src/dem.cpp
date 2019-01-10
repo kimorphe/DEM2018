@@ -3,7 +3,9 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <random>
 #include "dem.h"
+
 
 using namespace std;
 
@@ -25,6 +27,10 @@ void join_chars( char *str1, char *str2 , char *str_out);
 void join_chars( char *str1, char *str2 );
 
 int main(){
+
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::uniform_real_distribution<double> MT(0,1.0);
 
 	double PI=4.0*atan(1.0);
 	char fninp[128]="dem.inp";	// General DEM parameters
@@ -207,6 +213,9 @@ int main(){
 
 	ftmp=fopen("erg.out","w");
 
+	int ipts[2],isds[2];
+	ipts[0]=20; ipts[1]=100;
+	isds[0]=0; isds[1]=0;
 
 	SUBCELL *sbcll;
 	for(i=1;i<=prms.Nt;i++){	// Time Step (START) 
@@ -299,7 +308,8 @@ int main(){
 		fprintf(ftmp," %le %le",PTC[20].UE[0],PTC[20].UE[1]);
 		fprintf(ftmp," %le %le",PTC[100].UE[0],PTC[100].UE[1]);
 
-		double dUE=VarUE(rev,sbcll,PTC,prms.iprd,prms.sig,prms.Eps,20,0,-0.5); //*2.*prms.Eps0;
+		//double dUE=VarUE(rev,sbcll,PTC,prms.iprd,prms.sig,prms.Eps,20,0,-0.5); //*2.*prms.Eps0;
+		double dUE=VarUE(rev,sbcll,PTC,prms.iprd,prms.sig,prms.Eps,ipts,isds,0.3); //*2.*prms.Eps0;
 		//printf("dUE=%lf\n",)
 		fprintf(ftmp," %le\n",dUE);
 
