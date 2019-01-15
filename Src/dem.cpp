@@ -26,12 +26,43 @@ double vfac(double TK, double T0, double T1, double t_now, double t_start, doubl
 void join_chars( char *str1, char *str2 , char *str_out);
 void join_chars( char *str1, char *str2 );
 
+int wswap(PRTCL *PTC, int *ipts, int *isds, double dsig){
+	double sigi,sigj;
+	int nwi,nwj;
+	int nmin=0, nmax=3;
+	int iswap=0;
+	double ds=0.30;
+
+	sigi=PTC[ipts[0]].sigs[isds[0]]+dsig;
+	sigj=PTC[ipts[1]].sigs[isds[1]]-dsig;
+	nwi=round((sigi-0.9)/ds);
+	nwj=round((sigj-0.9)/ds);
+/*
+	if(sigi<smin) return(iswap);
+	if(sigi>smax) return(iswap);
+	if(sigj<smin) return(iswap);
+	if(sigj>smax) return(iswap);
+*/
+	if(nwi<nmin) return(iswap);
+	if(nwi>nmax) return(iswap);
+	if(nwj<nmin) return(iswap);
+	if(nwj>nmax) return(iswap);
+
+	PTC[ipts[0]].sigs[isds[0]]=sigi;
+	PTC[ipts[1]].sigs[isds[1]]=sigj;
+	iswap=1;
+
+	return(iswap);
+}
+
 int main(){
 
 	std::random_device rd;
 	std::mt19937 mt(rd());
-	std::uniform_real_distribution<double> MT(0,1.0);
+	//std::uniform_real_distribution<double> MT(0,1.0);
+	std::uniform_int_distribution<int> RndB(0,1);
 
+	int irnd,iswap;
 	double PI=4.0*atan(1.0);
 	char fninp[128]="dem.inp";	// General DEM parameters
 
@@ -78,7 +109,8 @@ int main(){
 	double Tfac=1.0,Vfac;
 
 	int nst;	// number of clay molecules
-	int i,j,k,np,imb,ipt,ir0,ir1,i0,i1;
+	//int i,j,k,np,imb,ipt,ir0,ir1,i0,i1;
+	int i,j,k,np,imb,ir0,ir1,i0,i1;
 	double Xmin,Xmax,Ymin,Ymax,Wmax[2],tt,Mtot,rho_d,pr;
 	double dt; // time increment
 	int Nt;	  // number of time steps	
@@ -102,6 +134,10 @@ int main(){
 	fgets(cbff,128,fp);
 	fscanf(fp,"%d\n",&np);
 	printf("np=%d\n",np);
+
+	std::uniform_int_distribution<int>RndI(0,np*2-1);
+	//irnd=RndI(mt);
+	//printf("%d %d %d %d\n",irnd/2,irnd%2,irnd,np);
 
 	PTC= (PRTCL *)malloc(sizeof(PRTCL)*np);
 	for(i=0;i<np;i++) PTC[i].init();
@@ -213,6 +249,7 @@ int main(){
 
 	ftmp=fopen("erg.out","w");
 
+	int ipt,iside;
 	int ipts[2],isds[2];
 	ipts[0]=20; ipts[1]=100;
 	isds[0]=0; isds[1]=0;
@@ -304,14 +341,26 @@ int main(){
 		fprintf(ferg,"%le %le %le %le %le %le %le\n",i*prms.dt,KE,UE,rev.Wd[0],rev.Wd[1],TK,rev.Tb);
 		fprintf(fstr,"%le %le %le %le %le ",i*prms.dt,rev.Wd[0],rev.Wd[1],rev.Wd[2],rev.Wd[3]);
 		fprintf(fstr,"%le %le %le ",Sab[0][0]*m0,Sab[1][0]*m0,Sab[1][1]*m0);
-		fprintf(ftmp,"%le %le",PTC[0].UE[0],PTC[0].UE[1]);
-		fprintf(ftmp," %le %le",PTC[20].UE[0],PTC[20].UE[1]);
-		fprintf(ftmp," %le %le",PTC[100].UE[0],PTC[100].UE[1]);
 
-		//double dUE=VarUE(rev,sbcll,PTC,prms.iprd,prms.sig,prms.Eps,20,0,-0.5); //*2.*prms.Eps0;
-		double dUE=VarUE(rev,sbcll,PTC,prms.iprd,prms.sig,prms.Eps,ipts,isds,0.3); //*2.*prms.Eps0;
-		//printf("dUE=%lf\n",)
-		fprintf(ftmp," %le\n",dUE);
+		for(ipt=0;ipt<np;ipt++){
+			ipts[0]=ipt;
+		for(iside=0;iside<2;iside++){
+			isds[0]=iside;
+
+		irnd=RndI(mt);
+		if(irnd != 2*ipts[0]+isds[0]){
+			ipts[1]=irnd/2;
+			isds[1]=irnd%2;
+			double dUE=VarUE(rev,sbcll,PTC,prms.iprd,prms.sig,prms.Eps,ipts,isds,0.3); //*2.*prms.Eps0;
+			iswap=0;
+			if(dUE < 0.0) iswap=wswap(PTC,ipts,isds,0.3);
+			//fprintf(ftmp," %le %le %le",dUE,PTC[ipts[0]].sigs[isds[0]], PTC[ipts[1]].sigs[isds[1]]);
+			//fprintf(ftmp," %d %d %d",iswap,ipts[1],isds[1]);
+		}
+		//fprintf(ftmp,"\n");
+		//fflush(ftmp);
+		}
+		}
 
 
 
@@ -500,8 +549,10 @@ void save_ptc_data(
 	fprintf(fp,"%d\n",np);
 	fprintf(fp,"# irev[1:2] x1   x2    v1   v2\n");
 	for(j=0;j<np;j++){	
-		fprintf(fp,"%d %d %22.16le %22.16le %22.16le %22.16le\n",
-		PTC[j].irev[0],PTC[j].irev[1],PTC[j].x[0], PTC[j].x[1],PTC[j].v[0],PTC[j].v[1]);
+		//fprintf(fp,"%d %d %22.16le %22.16le %22.16le %22.16le\n",
+		//PTC[j].irev[0],PTC[j].irev[1],PTC[j].x[0], PTC[j].x[1],PTC[j].v[0],PTC[j].v[1]);
+		fprintf(fp,"%d %d %22.16le %22.16le %22.16le %22.16le %22.16le %22.16le\n",
+		PTC[j].irev[0],PTC[j].irev[1],PTC[j].x[0], PTC[j].x[1],PTC[j].v[0],PTC[j].v[1],PTC[j].sigs[0],PTC[j].sigs[1]);
 	}
 	fprintf(fp,"#number of sheets\n");
 	fprintf(fp,"%d\n",nst);
