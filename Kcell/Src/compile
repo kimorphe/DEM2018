@@ -1,0 +1,12 @@
+g++ -c domain.cpp
+g++ -c main.cpp
+g++ -c mscs.cpp
+g++ -c rect.cpp
+g++ -o kcell main.o domain.o mscs.o rect.o
+
+g++ -o mkinp mkinp.cpp
+
+mv kcell ../
+mv mkinp ../
+
+rm *.o

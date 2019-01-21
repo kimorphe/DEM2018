@@ -268,6 +268,41 @@ void SHEET::xy2crv(REV rev, PRTCL *PTC){
 	printf("<n,t>=%lf\n",iprod(yf0,xf));
 	printf("\n");
 */
-
 };
 
+void SHEET::wsmooth(REV rev, PRTCL *PTC){
+	int i,ipt,jpt;
+	int j,j1,j2,jd;
+	int nsmp=2;
+	int nd=nsmp*2+1;
+	int nsum;
+	double dat;
+	double *sigp=(double *)malloc(sizeof(double)*Np);
+	double *sigm=(double *)malloc(sizeof(double)*Np);
+
+	//for(i=nsmp;i<Np-nsmp;i++){
+	for(i=0; i<Np; i++){
+		//ipt=list[i];
+		j1=i-nsmp;
+		j2=i+nsmp;
+		sigp[i]=0.0;
+		sigm[i]=0.0;
+		//if(j1<0) j1=0;
+		//if(j2>=Np) j2=Np-1;
+		for(j=j1; j<=j2; j++){ 
+			jd=j;
+			if(j<0) jd=0;
+			if(j>=Np) jd=Np-1;
+			jpt=list[jd];
+			sigp[i]+=PTC[jpt].sigs[0];
+			sigm[i]+=PTC[jpt].sigs[1];
+		}
+		sigp[i]/=nd;
+		sigm[i]/=nd;
+	}
+	for(i=0;i<Np;i++){
+		ipt=list[i];
+		PTC[ipt].sigs[0]=sigp[i];
+		PTC[ipt].sigs[1]=sigm[i];
+	}
+};

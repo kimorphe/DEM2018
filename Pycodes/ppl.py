@@ -55,20 +55,30 @@ class PTCS:
 		y=[];
 		irev=[];
 		jrev=[];
+		sigp=[];
+		sigm=[];
+		vx=[];
+		vy=[];
 		#for row in fp:
 		for k in range(Np):
 			dat=fp.readline();
 			dat=dat.split(" ");
-			x.append(float(dat[2]));	
-			y.append(float(dat[3]));	
 			irev.append(int(dat[0]));	
 			jrev.append(int(dat[1]));	
+			x.append(float(dat[2]));	
+			y.append(float(dat[3]));	
+			vx.append(float(dat[4]));	
+			vy.append(float(dat[5]));	
+			sigp.append(float(dat[6]));	
+			sigm.append(float(dat[7]));	
 		
-
 		self.x=x;
 		self.y=y; #print("x=",x); input("pause")
 		self.irev=irev;
-		self.jrev=jrev;
+		self.jrev=jrev; self.sigp=sigp; self.sigm=sigm;
+		self.Np=Np;
+		self.vx=vx;
+		self.vy=vy;
 		fp.close();
 
 	def plot(self,ax,nps,Movie=False):
@@ -99,7 +109,7 @@ class PTCS:
 
 			m1=0;
 			for m2 in indx:
-				#plt2,=ax.plot(x[m1:m2],y[m1:m2],"-",color="skyblue",ms=2,lw=2);
+				plt2,=ax.plot(x[m1:m2],y[m1:m2],"-",color="skyblue",ms=2,lw=6);
 				plt,=ax.plot(x[m1:m2],y[m1:m2],"-"+clrs[st%nclrs],ms=2,lw=1);
 				plts.append(plt);
 				m1=m2;
@@ -113,7 +123,7 @@ class PTCS:
 if __name__=="__main__":
 
 	nfile1=0;
-	nfile2=250;
+	nfile2=180;
 
 	args=sys.argv
 	narg=len(args)
@@ -121,13 +131,6 @@ if __name__=="__main__":
 		nfile1=int(args[1]);
 	if  narg > 2:
 		nfile2=int(args[2]);
-
-	#imv=int( raw_input("Movie(0) or Snapshots(1) ?"));
-	imv=int( input("Movie(0) or Snapshots(1) ?"));
-	if imv==0:
-		MV=True;
-	else:
-		MV=False;
 
 	fp=open("ptc_nums.dat");
 	nums=fp.readlines();
@@ -138,38 +141,34 @@ if __name__=="__main__":
 	ax.set_aspect(1.0)
 	ax.grid(True);
 
-	#fnum=np.linspace(0,100,101);
 	fnum=np.arange(nfile1,nfile2+1,1);
 	fnum=fnum.astype(int)
-
-	if MV:
-		ims=[];
-		Writer=animation.writers['ffmpeg']	
-		writer=Writer(fps=10,metadata=dict(artist="Me"),bitrate=1800)
-
+	nfile=len(fnum);
+	Sigp=np.array([]);
+	Sigm=np.array([]);
+	Vx=np.array([]);
+	Vy=np.array([]);
 	for k in fnum:
 		fname="x"+str(k)+".dat";
 		ptc=PTCS(fname);
-		plts=ptc.plot(ax,nums,Movie=MV);
-		ax.set_xlim([0,200]);
-		ax.set_ylim([0,200]);
-		ax.set_xlabel("x [nm]",fontsize="12")
-		ax.set_ylabel("y [nm]",fontsize="12")
-		title=ax.text(200,0,fname+", t="+str(ptc.time)+"[ps]",ha="right")
-		plts.append(title);
-		ax.grid(True)
+		Sigp=np.hstack( (Sigp,ptc.sigp) );
+		Sigm=np.hstack( (Sigm,ptc.sigm) );
+		Vx=np.hstack( (Vx,ptc.vx) );
+		Vy=np.hstack( (Vy,ptc.vy) );
+		print("sigb=",0.5*(np.mean(ptc.sigp)+np.mean(ptc.sigm)));
 
-		if MV:
-			ims.append(plts);
-		else:
-			#plt.savefig("x"+str(k)+".png");
-			plt.pause(0.1);
-	plt.savefig("x"+str(k)+".png");
-
-	if MV:
-		fn="movie.mp4"
-		ani=animation.ArtistAnimation(fig,ims,interval=1,repeat_delay=100)
-		print(" Wait, creating movie file ...");
-		ani.save(fn,writer=writer)
-		print(" Done.")
-		print(" Play "+fn+" (e.g. by typing 'totem "+fn+"')")
+	#plt.savefig("x"+str(k)+".png");
+	Np=ptc.Np;
+	Sigp=np.reshape(Sigp,[nfile,Np])
+	Sigm=np.reshape(Sigm,[nfile,Np])
+	Vx=np.reshape(Vx,[nfile,Np])
+	Vy=np.reshape(Vy,[nfile,Np])
+	fig=plt.figure()
+	ax=fig.add_subplot(211)
+	bx=fig.add_subplot(212)
+	im1=ax.imshow(Sigm,aspect="auto",origin="lower",cmap="jet");
+	im2=bx.imshow(Sigp,aspect="auto",origin="lower",cmap="jet");
+	#im2=bx.imshow(np.sqrt(Vx*Vx+Vy*Vy),aspect="auto",origin="lower",cmap="jet");
+	#cbar1=fig.colorbar(im1)	
+	#cbar2=fig.colorbar(im2)	
+	plt.show()

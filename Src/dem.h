@@ -210,6 +210,7 @@ class SHEET{
 		void set_vel(PRTCL *PTC, double vx, double vy);		// set velocity vector 
 		Curve2D crv;
 		void xy2crv(REV rev,PRTCL *PTC);
+		void wsmooth(REV rev, PRTCL *PTC);
 	private:
 }; 
 

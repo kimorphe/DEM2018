@@ -28,25 +28,27 @@ void join_chars( char *str1, char *str2 );
 
 int wswap(PRTCL *PTC, int *ipts, int *isds, double dsig){
 	double sigi,sigj;
-	int nwi,nwj;
-	int nmin=0, nmax=3;
 	int iswap=0;
-	double ds=0.30;
 
 	sigi=PTC[ipts[0]].sigs[isds[0]]+dsig;
 	sigj=PTC[ipts[1]].sigs[isds[1]]-dsig;
-	nwi=round((sigi-0.9)/ds);
-	nwj=round((sigj-0.9)/ds);
-/*
+	double smin=0.9, smax=1.8;
+
 	if(sigi<smin) return(iswap);
 	if(sigi>smax) return(iswap);
 	if(sigj<smin) return(iswap);
 	if(sigj>smax) return(iswap);
-*/
+/*
+	int nwi,nwj;
+	double ds=0.30;
+	int nmin=0, nmax=3;
+	nwi=round((sigi-0.9)/ds);
+	nwj=round((sigj-0.9)/ds);
 	if(nwi<nmin) return(iswap);
 	if(nwi>nmax) return(iswap);
 	if(nwj<nmin) return(iswap);
 	if(nwj>nmax) return(iswap);
+*/
 
 	PTC[ipts[0]].sigs[isds[0]]=sigi;
 	PTC[ipts[1]].sigs[isds[1]]=sigj;
@@ -54,6 +56,117 @@ int wswap(PRTCL *PTC, int *ipts, int *isds, double dsig){
 
 	return(iswap);
 }
+int move_water(
+		PRTCL *PTC, // particles
+		double dsig, // variation in water 
+		double rmax, // radius of interaction circle 
+		SUBCELL *sbcll,// Subcells 
+		REV rev,	// REV data
+		CNTRL prms	// Basic DEM  Parameters
+){
+	int np=prms.np;
+	int ipt,iside,irnd,iswap;
+	int ipts[2],isds[2];
+	int nswap=0;
+	double dUE;
+	double x1[2],x2[2];
+	double rx,ry,rr;
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::uniform_int_distribution<int>RndI(0,np*2-1);
+	for(ipt=0;ipt<np;ipt++){
+		ipts[0]=ipt;
+		x1[0]=PTC[ipt].x[0];
+		x1[1]=PTC[ipt].x[1];
+	for(iside=0;iside<2;iside++){
+		isds[0]=iside;
+		irnd=RndI(mt);
+		if(irnd != 2*ipts[0]+isds[0]){
+			ipts[1]=irnd/2;
+			isds[1]=irnd%2;
+			x2[0]=PTC[ipts[1]].x[0];
+			x2[1]=PTC[ipts[1]].x[1];
+
+			rx=x1[0]-x2[0];
+			ry=x1[1]-x2[1];
+			rr=sqrt(rx*rx+ry*ry);
+			if(rr>5.0) continue;
+			dUE=VarUE(rev,sbcll,PTC,prms.iprd,prms.sig,prms.Eps,ipts,isds,dsig); //*2.*prms.Eps0;
+			iswap=0;
+			if(dUE < 0.0) iswap=wswap(PTC,ipts,isds,dsig);
+			//fprintf(ftmp," %le %le %le",dUE,PTC[ipts[0]].sigs[isds[0]], PTC[ipts[1]].sigs[isds[1]]);
+			//fprintf(ftmp," %d %d %d",iswap,ipts[1],isds[1]);
+			nswap+=iswap;
+		}
+	}
+	}
+	return(nswap);
+};
+int move_water2(
+		PRTCL *PTC, // particles
+		double dsig, // variation in water 
+		double rmax, // radius of interaction circle 
+		SUBCELL *sbcll,// Subcells 
+		REV rev,	// REV data
+		CNTRL prms	// Basic DEM  Parameters
+){
+	int np=prms.np;
+	int ipt,iside,irnd,iswap;
+	int ipts[2],isds[2];
+	int nswap=0;
+	double dUE;
+	//double x1[2],x2[2];
+	double rx,ry,rr;
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	//std::uniform_int_distribution<int>RndI(0,np*2-1);
+	std::uniform_int_distribution<int>RndI(0,np-1);
+
+	Vec2 xpi,xpj,rij,ni,nj;
+
+	for(ipt=0;ipt<np;ipt++){
+		ipts[0]=ipt;
+		//x1[0]=PTC[ipt].x[0];
+		//x1[1]=PTC[ipt].x[1];
+		xpi.set(PTC[ipt].x);
+	for(iside=0;iside<2;iside++){
+		isds[0]=iside;
+		ni.set(PTC[ipt].nx);		
+		if(iside==1) ni.times(-1.0);
+
+		//irnd=RndI(mt);
+		ipts[1]=RndI(mt);
+		//if(irnd != 2*ipts[0]+isds[0]){
+		if(ipts[0] != ipts[1]){
+			//ipts[1]=irnd/2; isds[1]=irnd%2;
+			//x2[0]=PTC[ipts[1]].x[0];
+			//x2[1]=PTC[ipts[1]].x[1];
+			xpj.set(PTC[ipts[1]].x);
+
+			rij=vdiff(xpj,xpi);
+
+			rr=rij.len();
+			//rx=x1[0]-x2[0];
+			//ry=x1[1]-x2[1];
+			//rr=sqrt(rx*rx+ry*ry);
+			if(rr>rmax) continue;
+			if(iprod(ni,rij) <0.0 ) continue;
+
+			nj.set(PTC[ipts[1]].nx);
+			isds[1]=0;
+			//if(iprod(ni,nj)>=0.0) isds[1]=1;
+			if(iprod(rij,nj)>=0.0) isds[1]=1;
+
+			dUE=VarUE(rev,sbcll,PTC,prms.iprd,prms.sig,prms.Eps,ipts,isds,dsig); //*2.*prms.Eps0;
+			iswap=0;
+			if(dUE < 0.0) iswap=wswap(PTC,ipts,isds,dsig);
+			nswap+=iswap;
+		}
+	}
+	}
+	return(nswap);
+};
+
 
 int main(){
 
@@ -249,13 +362,14 @@ int main(){
 
 	ftmp=fopen("erg.out","w");
 
-	int ipt,iside;
+	int ipt,iside,ist;
 	int ipts[2],isds[2];
 	ipts[0]=20; ipts[1]=100;
 	isds[0]=0; isds[1]=0;
 
 	SUBCELL *sbcll;
 	for(i=1;i<=prms.Nt;i++){	// Time Step (START) 
+		//for(ist=0;ist<nst;ist++) st[ist].xy2crv(rev,PTC);
 
 		//printf("i=%d\n",i);
 		for(j=0;j<np;j++) PTC[j].scale(i,prms.dt,rev);
@@ -342,29 +456,14 @@ int main(){
 		fprintf(fstr,"%le %le %le %le %le ",i*prms.dt,rev.Wd[0],rev.Wd[1],rev.Wd[2],rev.Wd[3]);
 		fprintf(fstr,"%le %le %le ",Sab[0][0]*m0,Sab[1][0]*m0,Sab[1][1]*m0);
 
-		for(ipt=0;ipt<np;ipt++){
-			ipts[0]=ipt;
-		for(iside=0;iside<2;iside++){
-			isds[0]=iside;
-
-		irnd=RndI(mt);
-		if(irnd != 2*ipts[0]+isds[0]){
-			ipts[1]=irnd/2;
-			isds[1]=irnd%2;
-			double dUE=VarUE(rev,sbcll,PTC,prms.iprd,prms.sig,prms.Eps,ipts,isds,0.3); //*2.*prms.Eps0;
-			iswap=0;
-			if(dUE < 0.0) iswap=wswap(PTC,ipts,isds,0.3);
-			//fprintf(ftmp," %le %le %le",dUE,PTC[ipts[0]].sigs[isds[0]], PTC[ipts[1]].sigs[isds[1]]);
-			//fprintf(ftmp," %d %d %d",iswap,ipts[1],isds[1]);
+		int nswap;
+		if(i%2==1){
+			for(ist=0;ist<nst;ist++) st[ist].xy2crv(rev,PTC);
+			//nswap=move_water(PTC,0.15,3.5,sbcll,rev, prms);
+			nswap=move_water2(PTC,0.15,5.0,sbcll,rev, prms);
+			//printf("nswap=%d/%d\n",nswap,np);
+			st[ist].wsmooth(rev,PTC);
 		}
-		//fprintf(ftmp,"\n");
-		//fflush(ftmp);
-		}
-		}
-
-
-
-
 		if((ismp%nsmp)==0){
 			dsxx=rev.sxx-rev.sxxb*m0;
 			dsxy=rev.sxy-rev.sxyb*m0;
