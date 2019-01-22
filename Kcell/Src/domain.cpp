@@ -327,7 +327,7 @@ int cod2indx(double x, double Xa,double dx, int imax){
 double indx2cod(int indx,double Xa, double dx){
 	return(indx*dx+Xa);
 };
-int Dom2D::draw_line(double x1[2], double x2[2],int iphs){
+int Dom2D::draw_line(double x1[2], double x2[2],int iphs, int lw){
 
 	double r12[2];
 	int i1,i2,j1,j2,id,jd;
@@ -353,25 +353,47 @@ int Dom2D::draw_line(double x1[2], double x2[2],int iphs){
 	r12[0]=x2[0]-x1[0];
 	r12[1]=x2[1]-x1[1];
 
-	int ncell=0;
+	int ncell=0,itmp;
 	if(fabs(r12[0]) > fabs(r12[1])){
+		itmp=i1;
+		if(i1>i2){
+		       i1=i2;;
+		       i2=itmp;
+		}
 		for(id=i1; id<=i2; id++){
 			xcod=indx2cod(id,Xa[0],dx[0]);
 			ycod=(xcod-x1[0])/r12[0]*r12[1]+x1[1];
-			if(ycod < ymin) continue;
-			if(ycod > ymax) continue;
+			//if(ycod < ymin) continue;
+			//if(ycod > ymax) continue;
+			if(ycod > Xb[1]) continue;
+			if(ycod < Xa[1]) continue;
 			jd=cod2indx(ycod,Xa[1],dx[1],Ndiv[1]-1);
 			kcell[id][jd]=iphs;
+			for(int l=1;l<lw;l++){
+				if(jd-l >0) kcell[id][jd-l]=iphs;
+				if(jd+l <Ndiv[1]) kcell[id][jd+l]=iphs;
+			}
 			ncell++;
 		};
 	}else{
+		itmp=j1;
+		if(j1>j2){
+		       j1=j2;;
+		       j2=itmp;
+		}
 		for(jd=j1; jd<=j2; jd++){
 			ycod=indx2cod(jd,Xa[1],dx[1]);
 			xcod=(ycod-x1[1])/r12[1]*r12[0]+x1[0];
-			if(xcod < xmin) continue;
-			if(xcod > xmax) continue;
+			//if(xcod < xmin) continue;
+			//if(xcod > xmax) continue;
+			if(xcod > Xb[0]) continue;
+			if(xcod < Xa[0]) continue;
 			id=cod2indx(xcod,Xa[0],dx[0],Ndiv[0]-1);
 			kcell[id][jd]=iphs;
+			for(int l=1;l<lw;l++){
+				if(id-l >0) kcell[id-l][jd]=iphs;
+				if(id+l <Ndiv[0]) kcell[id+l][jd]=iphs;
+			}
 			ncell++;
 		}
 	}
