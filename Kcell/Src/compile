@@ -4,7 +4,10 @@ g++ -c mscs.cpp
 g++ -c rect.cpp
 g++ -o kcell main.o domain.o mscs.o rect.o
 
+g++ -c line.cpp
+
 g++ -o mkinp mkinp.cpp
+g++ -o line line.o domain.o mscs.o rect.o
 
 mv kcell ../
 mv mkinp ../

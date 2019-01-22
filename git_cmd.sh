@@ -26,6 +26,3 @@ git commit
 
 git push -u origin master
 
-
-ls: '/Kcell' にアクセスできません: そのようなファイルやディレクトリはありません
-

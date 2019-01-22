@@ -48,9 +48,12 @@ class Dom2D{
 		int mscs(char *fn);
 		void out_kcell(char *fname);
 		Dom2D();
+		Dom2D(int ndiv1, int ndiv2);
 		Dom2D(char *fname);
+		void set_dx();
 		int count(int i);
 		double time;	// time (ps) in DEM simulation
+		int draw_line(double x1[2], double x2[2],int iphs);
 	private:
 		void mem_alloc();
 };

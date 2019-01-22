@@ -61,6 +61,19 @@ void Dom2D :: out_kcell(char *fname){
 	}
 	fclose(fp);
 };
+Dom2D::Dom2D(int Nx,int Ny){
+	Ndiv[0]=Nx; 
+	Ndiv[1]=Ny; 
+	mem_alloc();
+}
+void Dom2D::set_dx(){
+	int i,ndim=2;
+	for(i=0;i<ndim;i++){
+		dx[i]=(Xb[i]-Xa[i])/Ndiv[i];
+	}
+	iprd[0]=0;
+	iprd[1]=0;
+};
 Dom2D::Dom2D(){		// Constructor 1
 	int i,ndim=2;
 	for(i=0;i<ndim;i++){
@@ -246,7 +259,6 @@ int Dom2D::perfo_rec(char *fname){
 	fclose(fp);
 	return(nrec);
 };
-
 int Dom2D::mscs(char *fname){
 	int i,j,k,ncirc=0;
 	int ix,jy,iin,iphs;
@@ -305,3 +317,66 @@ int Dom2D::mscs(char *fname){
 	}
 	return(ncirc);
 };
+
+int cod2indx(double x, double Xa,double dx, int imax){
+	int indx=floor((x-Xa)/dx);
+	if (indx<0) indx=0;
+	if (indx> imax) indx=imax;
+	return(indx);
+};
+double indx2cod(int indx,double Xa, double dx){
+	return(indx*dx+Xa);
+};
+int Dom2D::draw_line(double x1[2], double x2[2],int iphs){
+
+	double r12[2];
+	int i1,i2,j1,j2,id,jd;
+	double xmin,xmax;
+	double ymin,ymax;
+	double xcod,ycod;
+
+	xmin=x1[0]; ymin=x1[1];
+	if(xmin > x2[0]) xmin=x2[0];
+	if(ymin > x2[1]) ymin=x2[1];
+
+	xmax=x1[0]; ymax=x1[1];
+	if(xmax < x2[0]) xmax=x2[0];
+	if(ymax < x2[1]) ymax=x2[1];
+
+
+	i1=cod2indx(x1[0],Xa[0],dx[0],Ndiv[0]-1);
+	i2=cod2indx(x2[0],Xa[0],dx[0],Ndiv[0]-1);
+
+	j1=cod2indx(x1[1],Xa[1],dx[1],Ndiv[1]-1);
+	j2=cod2indx(x2[1],Xa[1],dx[1],Ndiv[1]-1);
+
+	r12[0]=x2[0]-x1[0];
+	r12[1]=x2[1]-x1[1];
+
+	int ncell=0;
+	if(fabs(r12[0]) > fabs(r12[1])){
+		for(id=i1; id<=i2; id++){
+			xcod=indx2cod(id,Xa[0],dx[0]);
+			ycod=(xcod-x1[0])/r12[0]*r12[1]+x1[1];
+			if(ycod < ymin) continue;
+			if(ycod > ymax) continue;
+			jd=cod2indx(ycod,Xa[1],dx[1],Ndiv[1]-1);
+			kcell[id][jd]=iphs;
+			ncell++;
+		};
+	}else{
+		for(jd=j1; jd<=j2; jd++){
+			ycod=indx2cod(jd,Xa[1],dx[1]);
+			xcod=(ycod-x1[1])/r12[1]*r12[0]+x1[0];
+			if(xcod < xmin) continue;
+			if(xcod > xmax) continue;
+			id=cod2indx(xcod,Xa[0],dx[0],Ndiv[0]-1);
+			kcell[id][jd]=iphs;
+			ncell++;
+		}
+	}
+
+	return(ncell);
+}
+
+
