@@ -318,19 +318,47 @@ int Dom2D::mscs(char *fname){
 	return(ncirc);
 };
 
-int cod2indx(double x, double Xa,double dx, int imax){
+int cod2indx(double x, double Xa,double dx){
+	return(floor((x-Xa)/dx));
+}
+int cod2indx(double x, double Xa,double dx, int periodic){
 	int indx=floor((x-Xa)/dx);
-	if (indx<0) indx=0;
-	if (indx> imax) indx=imax;
-	return(indx);
+	if(periodic>0) indx=(indx%periodic);
 };
+int filt_indx(int indx, int imin, int imax){
+	if(indx<imin) indx=imin;
+	if(indx>imax) indx=imax;
+	return(indx);
+}
+int is_in(int i, int imin,int imax){
+
+	if(i < imin) return(0); // False
+	if(i > imax) return(0); // False
+
+	return(1);	//True
+};
+int ring(int i, int N){
+	if(i>=0){
+	       return(i%N);
+	}else{
+		while(i<0) i+=N;
+		return(i%N);
+	}
+}
+void swap(int *i, int *j){
+	int tmp;
+	tmp=*i;
+	*i=*j;
+	*j=tmp;
+}
 double indx2cod(int indx,double Xa, double dx){
-	return(indx*dx+Xa);
+	return((indx+0.5)*dx+Xa);
 };
 int Dom2D::draw_line(double x1[2], double x2[2],int iphs, int lw){
 
 	double r12[2];
 	int i1,i2,j1,j2,id,jd;
+	int indx,jndx;
 	double xmin,xmax;
 	double ymin,ymax;
 	double xcod,ycod;
@@ -344,55 +372,70 @@ int Dom2D::draw_line(double x1[2], double x2[2],int iphs, int lw){
 	if(ymax < x2[1]) ymax=x2[1];
 
 
+	int periodic;
+	periodic=0;	// non-periodic
+	periodic=1;	// periodic
 	i1=cod2indx(x1[0],Xa[0],dx[0],Ndiv[0]-1);
 	i2=cod2indx(x2[0],Xa[0],dx[0],Ndiv[0]-1);
 
 	j1=cod2indx(x1[1],Xa[1],dx[1],Ndiv[1]-1);
 	j2=cod2indx(x2[1],Xa[1],dx[1],Ndiv[1]-1);
 
+	int iprd=0;	// non-periodic
+	i1=cod2indx(x1[0],Xa[0],dx[0],iprd);
+	i2=cod2indx(x2[0],Xa[0],dx[0],iprd);
+	j1=cod2indx(x1[1],Xa[1],dx[1],iprd);
+	j2=cod2indx(x2[1],Xa[1],dx[1],iprd);
+
 	r12[0]=x2[0]-x1[0];
 	r12[1]=x2[1]-x1[1];
 
-	int ncell=0,itmp;
+	int ncell=0,itmp,in;
 	if(fabs(r12[0]) > fabs(r12[1])){
-		itmp=i1;
-		if(i1>i2){
-		       i1=i2;;
-		       i2=itmp;
-		}
+		if(i1>i2) swap(&i1,&i2);
 		for(id=i1; id<=i2; id++){
 			xcod=indx2cod(id,Xa[0],dx[0]);
 			ycod=(xcod-x1[0])/r12[0]*r12[1]+x1[1];
-			//if(ycod < ymin) continue;
-			//if(ycod > ymax) continue;
-			if(ycod > Xb[1]) continue;
-			if(ycod < Xa[1]) continue;
-			jd=cod2indx(ycod,Xa[1],dx[1],Ndiv[1]-1);
-			kcell[id][jd]=iphs;
+			jd=cod2indx(ycod,Xa[1],dx[1]);
+
+			indx=id;
+			jndx=jd;
+			if(periodic==1) indx=ring(indx,Ndiv[0]);
+			if(periodic==1) jndx=ring(jndx,Ndiv[1]);
+
+			//if(xcod <Xa[0]) continue;
+			//if(xcod >Xb[0]) continue;
+			//if(ycod > Xb[1]) continue;
+			//if(ycod < Xa[1]) continue;
+			if(is_in(indx,0,Ndiv[0]-1)!=1) continue;
+			if(is_in(jndx,0,Ndiv[1]-1)!=1) continue;
+			kcell[indx][jndx]=iphs;
 			for(int l=1;l<lw;l++){
-				if(jd-l >0) kcell[id][jd-l]=iphs;
-				if(jd+l <Ndiv[1]) kcell[id][jd+l]=iphs;
+				if(jndx-l >0) kcell[indx][jndx-l]=iphs;
+				if(jndx+l <Ndiv[1]) kcell[indx][jndx+l]=iphs;
 			}
 			ncell++;
 		};
 	}else{
-		itmp=j1;
-		if(j1>j2){
-		       j1=j2;;
-		       j2=itmp;
-		}
+		if(j1>j2) swap(&j1,&j2);
 		for(jd=j1; jd<=j2; jd++){
 			ycod=indx2cod(jd,Xa[1],dx[1]);
 			xcod=(ycod-x1[1])/r12[1]*r12[0]+x1[0];
-			//if(xcod < xmin) continue;
-			//if(xcod > xmax) continue;
-			if(xcod > Xb[0]) continue;
-			if(xcod < Xa[0]) continue;
-			id=cod2indx(xcod,Xa[0],dx[0],Ndiv[0]-1);
-			kcell[id][jd]=iphs;
+			id=cod2indx(xcod,Xa[0],dx[0]);
+
+			jndx=jd;
+			indx=id;
+			if(periodic==1) jndx=ring(jndx,Ndiv[1]); 
+			if(periodic==1) indx=ring(indx,Ndiv[0]); 
+
+			//if(xcod > Xb[0]) continue;
+			//if(xcod < Xa[0]) continue;
+			if(is_in(jndx,0,Ndiv[1]-1)!=1) continue;
+			if(is_in(indx,0,Ndiv[0]-1)!=1) continue;
+			kcell[indx][jndx]=iphs;
 			for(int l=1;l<lw;l++){
-				if(id-l >0) kcell[id-l][jd]=iphs;
-				if(id+l <Ndiv[0]) kcell[id+l][jd]=iphs;
+				if(indx-l >0) kcell[indx-l][jndx]=iphs;
+				if(indx+l <Ndiv[0]) kcell[indx+l][jndx]=iphs;
 			}
 			ncell++;
 		}

@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "domain.h"
 #include <math.h>
+#include "domain.h"
+#include "spline.h"
 
 int main(int argc, char *argv[]){
 
@@ -34,6 +35,7 @@ int main(int argc, char *argv[]){
 	x2[0]=7.0; x2[1]=3.0;
 	dom.draw_line(x1,x2,1,lw);
 
+	/*
 	x1[0]=-2.0; x1[1]=5.0;
 	x2[0]=14.0; x2[1]=6.0;
 	dom.draw_line(x1,x2,1,lw);
@@ -49,18 +51,21 @@ int main(int argc, char *argv[]){
 	x1[0]=8.0; x1[1]=13.0;
 	x2[0]=8.0; x2[1]=-2.0;
 	dom.draw_line(x1,x2,1,lw);
+	*/
 
 	double th,dth;
 	double pi=4.0*atan(1.0);
-	int N=181;
-	dth=pi*0.5/(N-1);
+	int N=361;
+	dth=pi*2.0/(N-1);
+	double r1=5.0;
+	double r2=6.0;
 	for(int i=0;i<N;i++){
 		th=i*dth;
-		x1[0]=5.0*cos(th);
-		x1[1]=5.0*sin(th);
-		x2[0]=6.0*cos(th);
-		x2[1]=6.0*sin(th);
-		dom.draw_line(x1,x2,2,lw);
+		x1[0]=r1*cos(th);
+		x1[1]=r1*sin(th);
+		x2[0]=r2*cos(th);
+		x2[1]=r2*sin(th);
+		dom.draw_line(x1,x2,2,1);
 	}
 
 	dom.out_kcell(fnout);

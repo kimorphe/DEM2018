@@ -1,4 +1,5 @@
 void mem_alloc2D(int nx, int ny, double ***pt);
+void show_msg(char *fname);
 
 //	********************************************
 //

@@ -5,11 +5,15 @@ g++ -c rect.cpp
 g++ -o kcell main.o domain.o mscs.o rect.o
 
 g++ -c line.cpp
+g++ -c paint.cpp
+g++ -c spline.cpp
 
 g++ -o mkinp mkinp.cpp
 g++ -o line line.o domain.o mscs.o rect.o
+g++ -o paint paint.o domain.o mscs.o rect.o spline.o
 
 mv kcell ../
 mv mkinp ../
+mv paint ../
 
 rm *.o
