@@ -99,27 +99,49 @@ void Curve2D::spline(){
 }
 double Curve2D::intplx(double s){
 	int i=int(s);
-	if(i>=np-1) i=np-2;
 	double xi=s-i;
+	if(i>=np-1){
+	      	i=np-2;
+		xi=1.0;
+	}
+
 	return(x[i]+xi*(bx[i]+xi*(cx[i]+xi*dx[i])));
 }
 double Curve2D::intply(double s){
+	//int i=int(s);
+	//if(i>=np-1) i=np-2;
+	//double xi=s-i;
 	int i=int(s);
-	if(i>=np-1) i=np-2;
 	double xi=s-i;
+	if(i>=np-1){
+	      	i=np-2;
+		xi=1.0;
+	}
 	return(y[i]+xi*(by[i]+xi*(cy[i]+xi*dy[i])));
 }
 
 double Curve2D::dxds(double s){
 	int i=int(s);
-	if(i>=np-1) i=np-2;
 	double xi=s-i;
+	if(i>=np-1){
+	      	i=np-2;
+		xi=1.0;
+	}
+	//int i=int(s);
+	//if(i>=np-1) i=np-2;
+	//double xi=s-i;
 	return(bx[i]+xi*(2.*cx[i]+3.*xi*dx[i]));
 };
 double Curve2D::dyds(double s){
 	int i=int(s);
-	if(i>=np-1) i=np-2;
 	double xi=s-i;
+	if(i>=np-1){
+	      	i=np-2;
+		xi=1.0;
+	}
+	//int i=int(s);
+	//if(i>=np-1) i=np-2;
+	//double xi=s-i;
 	return(by[i]+xi*(2.*cy[i]+3.*xi*dy[i]));
 };
 

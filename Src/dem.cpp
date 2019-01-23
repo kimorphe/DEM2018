@@ -457,13 +457,15 @@ int main(){
 		fprintf(fstr,"%le %le %le ",Sab[0][0]*m0,Sab[1][0]*m0,Sab[1][1]*m0);
 
 		int nswap;
+		/*
 		if(i%2==1){
 			for(ist=0;ist<nst;ist++) st[ist].xy2crv(rev,PTC);
 			//nswap=move_water(PTC,0.15,3.5,sbcll,rev, prms);
-			nswap=move_water2(PTC,0.15,5.0,sbcll,rev, prms);
+			nswap=move_water2(PTC,0.15,3.5,sbcll,rev, prms);
 			//printf("nswap=%d/%d\n",nswap,np);
 			st[ist].wsmooth(rev,PTC);
 		}
+		*/
 		if((ismp%nsmp)==0){
 			dsxx=rev.sxx-rev.sxxb*m0;
 			dsxy=rev.sxy-rev.sxyb*m0;

@@ -273,7 +273,7 @@ void SHEET::xy2crv(REV rev, PRTCL *PTC){
 void SHEET::wsmooth(REV rev, PRTCL *PTC){
 	int i,ipt,jpt;
 	int j,j1,j2,jd;
-	int nsmp=2;
+	int nsmp=3;
 	int nd=nsmp*2+1;
 	int nsum;
 	double dat;
