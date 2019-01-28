@@ -10,7 +10,7 @@ g++ -c spline.cpp
 
 g++ -o mkinp mkinp.cpp
 g++ -o line line.o domain.o mscs.o rect.o
-g++ -o paint paint.o domain.o mscs.o rect.o spline.o
+g++ -o paint paint.o domain.o mscs.o rect.o spline.o 
 
 mv kcell ../
 mv mkinp ../

@@ -71,6 +71,8 @@ int main(int argc, char *argv[] ){
 	fgets(cbff,128,fp);
 	fscanf(fp,"%s\n",fnout);
 	puts(fndat);
+
+	sprintf(fnout,"kcell.dat");
 	puts(fnout);
 	fgets(cbff,128,fp);
 	fscanf(fp,"%d\n",&nsig);
@@ -161,6 +163,7 @@ int main(int argc, char *argv[] ){
 		PT[i].irev[1]=ir1;
 	}
 
+	/*
 	fprintf(fo,"# time (ps) in DEM simulation\n");
 	fprintf(fo,"%lf\n",tt);
 	fprintf(fo,"# Xa[2], Xb[2]\n");
@@ -170,7 +173,15 @@ int main(int argc, char *argv[] ){
 	fprintf(fo,"%d %d\n",iprd[0],iprd[1]);
 	fprintf(fo,"# Ndiv[0], Ndiv[1]\n");
 	fprintf(fo," %d %d\n",Ndiv[0],Ndiv[1]);
+	*/
+	Dom2D dom(Ndiv[0],Ndiv[1]);
+	dom.Xa[0]=Xa[0]; dom.Xa[1]=Xa[1];
+	dom.Xb[0]=Xa[0]+Wd[0];
+	dom.Xb[1]=Xa[1]+Wd[1];
+	dom.set_dx();
 
+
+/*
 	if(icavi==1){
 		fprintf(fo,"##Circ\n");
 		fprintf(fo,"%d \n",npt*nsig);
@@ -210,8 +221,9 @@ int main(int argc, char *argv[] ){
 	}
 	fclose(fp);
 	fclose(fo);
+*/
 
-	Curve2D *crvs;
+	Curve2D *crvs,crv;
 	crvs=(Curve2D *)malloc(sizeof(Curve2D)*nst);
 		for(i=0;i<nst;i++){
 			crvs[i].init(st[i].Np);
@@ -231,20 +243,45 @@ int main(int argc, char *argv[] ){
 		}
 
 	double ss,ds;
-	int Ns=61;
+	int Ns=400;
+	double dxds,dyds;
+	Vec2 tb,nb;
 	for(i=0;i<nst;i++){
 		ds=double(crvs[i].np-1)/(Ns-1);
 		for(j=0;j<Ns;j++){
 			ss=ds*j;
 			xx=crvs[i].intplx(ss);
 			yy=crvs[i].intply(ss);
-			printf("%lf %lf %lf\n",xx,yy,ss);
+			dxds=crvs[i].dxds(ss);
+			dyds=crvs[i].dyds(ss);
+
+			tb.set(dxds,dyds);
+			tt=tb.len();
+			tb.div(tt);
+			nb.set(-tb.x[1],tb.x[0]);
+			nb.times(sig);
+			//printf("%lf %lf %lf\n",xx,yy,ss);
+			x1[0]=xx;
+			x1[1]=yy;
+
+			x2[0]=x1[0]+nb.x[0];
+			x2[1]=x1[1]+nb.x[1];
+			dom.draw_line(x1,x2,1,1);
 		};
-		puts("");
+		//puts("");
 	};
-	
+	for(i=0;i<nst;i++){
+		//crv=crvs[i];
+	for(j=0;j<st[i].Np-1;j++){
+		x1[0]=crvs[i].x[j];
+		x1[1]=crvs[i].y[j];
+		x2[0]=crvs[i].x[j+1];
+		x2[1]=crvs[i].y[j+1];	
+		dom.draw_line(x1,x2,2,1);
+	}
+	}	
 
-
+	dom.out_kcell(fnout);
 	return(0);
 }
 
