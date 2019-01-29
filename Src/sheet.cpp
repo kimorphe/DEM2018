@@ -242,6 +242,7 @@ void SHEET::xy2crv(REV rev, PRTCL *PTC){
 		crv.x[i]=xf.x[0];
 		crv.y[i]=xf.x[1];
 	}
+	crv.smooth(2);
 	crv.spline();
 	//char cbff[128];
 	//strcpy(cbff,"xydat.out");

@@ -1,7 +1,7 @@
 # particle data file
 ./dem.inp
 ./sheet.dat
-./x119.dat
+../TestData/x210.dat
 # output file
 kcell.inp
 # reduction factor for sig (characteristic length)

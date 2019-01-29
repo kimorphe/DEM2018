@@ -34,6 +34,7 @@ class PRTCL{
 		int irev[2];	// cell index 
 		void init();	// initialize class instance
 		void setX(double x1, double x2); // set position vector
+		double sigs[2];
 	private:
  };
 
@@ -161,6 +162,8 @@ int main(int argc, char *argv[] ){
 		PT[i].setX(xx,yy);
 		PT[i].irev[0]=ir0;
 		PT[i].irev[1]=ir1;
+		PT[i].sigs[0]=sigs[0];
+		PT[i].sigs[1]=sigs[1];
 	}
 
 	/*
@@ -223,10 +226,12 @@ int main(int argc, char *argv[] ){
 	fclose(fo);
 */
 
-	Curve2D *crvs,crv;
+	Curve2D *crvs,crv,*hgts;
 	crvs=(Curve2D *)malloc(sizeof(Curve2D)*nst);
+	hgts=(Curve2D *)malloc(sizeof(Curve2D)*nst);
 		for(i=0;i<nst;i++){
 			crvs[i].init(st[i].Np);
+			hgts[i].init(st[i].Np);
 		for(j=0;j<st[i].Np;j++){
 			ip1=st[i].list[j];
 			//ip2=st[i].list[j+1];
@@ -237,16 +242,20 @@ int main(int argc, char *argv[] ){
 			//printf("%lf %lf\n",x1[0],x1[1]);
 			crvs[i].x[j]=x1[0];
 			crvs[i].y[j]=x1[1];
+			hgts[i].x[j]=PT[ip1].sigs[0];
+			hgts[i].y[j]=PT[ip1].sigs[1];
 		}
 			crvs[i].spline();
+			hgts[i].spline();
 		//puts("");
 		}
 
 	double ss,ds;
-	int Ns=400;
-	double dxds,dyds;
+	int Ns;
+	double dxds,dyds,sigp,sigm;
 	Vec2 tb,nb;
 	for(i=0;i<nst;i++){
+		Ns=crvs[i].np*100;
 		ds=double(crvs[i].np-1)/(Ns-1);
 		for(j=0;j<Ns;j++){
 			ss=ds*j;
@@ -259,14 +268,21 @@ int main(int argc, char *argv[] ){
 			tt=tb.len();
 			tb.div(tt);
 			nb.set(-tb.x[1],tb.x[0]);
-			nb.times(sig);
+			//nb.times(sig);
 			//printf("%lf %lf %lf\n",xx,yy,ss);
-			x1[0]=xx;
-			x1[1]=yy;
-
-			x2[0]=x1[0]+nb.x[0];
-			x2[1]=x1[1]+nb.x[1];
+			sigp=hgts[i].intplx(ss)*0.5;
+			sigm=hgts[i].intply(ss)*0.5;
+			x1[0]=xx+nb.x[0]*sigp;
+			x1[1]=yy+nb.x[1]*sigp;
+			x2[0]=xx-nb.x[0]*sigm;
+			x2[1]=yy-nb.x[1]*sigm;
 			dom.draw_line(x1,x2,1,1);
+
+			x1[0]=xx+nb.x[0]*0.45;
+			x1[1]=yy+nb.x[1]*0.45;
+			x2[0]=xx-nb.x[0]*0.45;
+			x2[1]=yy-nb.x[1]*0.45;
+			dom.draw_line(x1,x2,2,1);
 		};
 		//puts("");
 	};

@@ -49,6 +49,7 @@ class Curve2D{	// plane (2D) curve
 		double intply(double s); // interpolate y(s) for s in (0, np-1)
 		double dxds(double s); // interpolate dx/ds 
 		double dyds(double s); // interpolate dy/ds
+		void smooth(int nsmp2);
 	private:
 	protected:
 };
@@ -307,7 +308,8 @@ double VarUE(
 	double sig, double Eps,
 	int ipts[2],
 	int isds[2],
-	double var_sig
+	double var_sig,
+	double dUE[2]
 );
 double VDF_L(
 	REV rev, 	// REV

@@ -32,7 +32,7 @@ print(np.shape(K));
 fig=plt.figure();
 ax=fig.add_subplot(111)
 #im=ax.imshow(K,origin="lower",extent=[Xa[0],Xb[0],Xa[1],Xb[1]],interpolation="none",vmin=0,vmax=2,cmap="gray");
-im=ax.imshow(K,origin="lower",extent=[Xa[0],Xb[0],Xa[1],Xb[1]],interpolation="none",vmin=0,vmax=2)
+im=ax.imshow(K,origin="lower",extent=[Xa[0],Xb[0],Xa[1],Xb[1]],interpolation="bicubic",vmin=0,vmax=2)
 plt.colorbar(im);
 ax.set_title(fname);
 plt.show();

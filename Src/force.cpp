@@ -197,7 +197,6 @@ double VDF(
 			idiff=abs(PTC[ipt].ipt-PTC[jpt].ipt);
 
 			if(PTC[ipt].ist==PTC[jpt].ist && idiff < 2) continue; 
-			//if(PTC[ipt].ist==PTC[jpt].ist && idiff < 4) continue; 
 			//
 			sigj=PTC[jpt].get_sig(PTC[ipt].x,&isgn,dsig);
 			sigi=PTC[ipt].get_sig(PTC[jpt].x,&isgn,dsig);
@@ -227,7 +226,8 @@ double VarUE(
 	double sig, double Eps,
 	int ipts[2],	// perturbed particles 
 	int isds[2], 	// side (0:top, 1: bottom)
-	double var_sig	// amount of water taken/supplied
+	double var_sig,	// amount of water taken/supplied
+	double dUE_try[2]
 ){
 	int i,ix,iy,ip,ipt;
 	int j,jx,jy,jp,jpt,jpt0;
@@ -263,6 +263,8 @@ double VarUE(
 	iofst[0]=0; iofst[1]=0;
 
 	double uvar=0.0;
+	dUE_try[0]=0.0;
+	dUE_try[1]=0.0;
 	for(int k=0;k<2;k++){	// perturbed pair of particles
 
 		ipt=ipts[k];
@@ -322,6 +324,7 @@ double VarUE(
 		}
 		}
 		uvar+=(UE[iside]-PTC[ipt].UE[iside]);
+		dUE_try[iside]+=(UE[iside]-PTC[ipt].UE[iside]);
 	}
 	//return(UE[iside]-PTC[ipt].UE[iside]);
 	return(uvar);

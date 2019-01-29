@@ -113,7 +113,7 @@ class PTCS:
 if __name__=="__main__":
 
 	nfile1=0;
-	nfile2=250; inc=5;
+	nfile2=250; inc=2;
 
 	args=sys.argv
 	narg=len(args)
@@ -162,8 +162,8 @@ if __name__=="__main__":
 		if MV:
 			ims.append(plts);
 		else:
-			plt.savefig("x"+str(k)+".png",bbox_inches="tight");
-			#plt.pause(0.1);
+			#plt.savefig("x"+str(k)+".png",bbox_inches="tight");
+			plt.pause(0.1);
 	plt.savefig("x"+str(k)+".png");
 
 	if MV:

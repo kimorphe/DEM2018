@@ -33,6 +33,29 @@ void Curve2D:: init(int N){
 		dy[i]=0.0;
 	}
 };
+void Curve2D:: smooth(int nsmp2){
+	int i,j,indx;
+	double *xb,*yb;
+	int nsmp=nsmp2*2+1;
+
+	xb=(double *)malloc(sizeof(double)*np);
+	yb=(double *)malloc(sizeof(double)*np);
+	for(i=0;i<np;i++){
+		xb[i]=0.0;
+		yb[i]=0.0;
+	for(j=-nsmp2; j<=nsmp2; j++){
+		indx=j;
+		if(indx<0) indx=0;
+		if(indx>=np) indx=np-1;
+		xb[i]+=x[indx];
+		yb[i]+=y[indx];
+	}
+	xb[i]/=nsmp;
+	yb[i]/=nsmp;
+	}
+	free(xb);
+	free(yb);
+};
 void Curve2D::print(){
 	puts("-----------------------------");
 	for(int i=0;i<np;i++){

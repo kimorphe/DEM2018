@@ -52,6 +52,8 @@ int wswap(PRTCL *PTC, int *ipts, int *isds, double dsig){
 
 	PTC[ipts[0]].sigs[isds[0]]=sigi;
 	PTC[ipts[1]].sigs[isds[1]]=sigj;
+	//PTC[ipts[0]].v[0]*=0.95; PTC[ipts[1]].v[0]*=0.95;
+	//PTC[ipts[0]].v[1]*=0.95; PTC[ipts[1]].v[1]*=0.95;
 	iswap=1;
 
 	return(iswap);
@@ -69,7 +71,7 @@ int move_water(
 	int ipts[2],isds[2];
 	int nswap=0;
 	double dUE;
-	double x1[2],x2[2];
+	double x1[2],x2[2],dUE_try[2];
 	double rx,ry,rr;
 	std::random_device rd;
 	std::mt19937 mt(rd());
@@ -91,9 +93,13 @@ int move_water(
 			ry=x1[1]-x2[1];
 			rr=sqrt(rx*rx+ry*ry);
 			if(rr>5.0) continue;
-			dUE=VarUE(rev,sbcll,PTC,prms.iprd,prms.sig,prms.Eps,ipts,isds,dsig); //*2.*prms.Eps0;
+			dUE=VarUE(rev,sbcll,PTC,prms.iprd,prms.sig,prms.Eps,ipts,isds,dsig,dUE_try); //*2.*prms.Eps0;
 			iswap=0;
-			if(dUE < 0.0) iswap=wswap(PTC,ipts,isds,dsig);
+			if(dUE < 0.0){
+			       	iswap=wswap(PTC,ipts,isds,dsig);
+				PTC[ipt].UE[isds[0]]+=dUE_try[0];
+				PTC[ipts[1]].UE[isds[1]]+=dUE_try[1];
+			}
 			//fprintf(ftmp," %le %le %le",dUE,PTC[ipts[0]].sigs[isds[0]], PTC[ipts[1]].sigs[isds[1]]);
 			//fprintf(ftmp," %d %d %d",iswap,ipts[1],isds[1]);
 			nswap+=iswap;
@@ -114,7 +120,7 @@ int move_water2(
 	int ipt,iside,irnd,iswap;
 	int ipts[2],isds[2];
 	int nswap=0;
-	double dUE;
+	double dUE,dUE_try[2];
 	//double x1[2],x2[2];
 	double rx,ry,rr;
 	std::random_device rd;
@@ -125,7 +131,11 @@ int move_water2(
 	Vec2 xpi,xpj,rij,ni,nj;
 
 	for(ipt=0;ipt<np;ipt++){
+	//for(ipt=0;ipt<1;ipt++){
 		ipts[0]=ipt;
+
+		ipts[0]=RndI(mt);
+
 		//x1[0]=PTC[ipt].x[0];
 		//x1[1]=PTC[ipt].x[1];
 		xpi.set(PTC[ipt].x);
@@ -157,9 +167,13 @@ int move_water2(
 			//if(iprod(ni,nj)>=0.0) isds[1]=1;
 			if(iprod(rij,nj)>=0.0) isds[1]=1;
 
-			dUE=VarUE(rev,sbcll,PTC,prms.iprd,prms.sig,prms.Eps,ipts,isds,dsig); //*2.*prms.Eps0;
+			dUE=VarUE(rev,sbcll,PTC,prms.iprd,prms.sig,prms.Eps,ipts,isds,dsig,dUE_try); //*2.*prms.Eps0;
 			iswap=0;
-			if(dUE < 0.0) iswap=wswap(PTC,ipts,isds,dsig);
+			if(dUE < 0.0){
+			       	iswap=wswap(PTC,ipts,isds,dsig);
+				PTC[ipts[0]].UE[isds[0]]+=dUE_try[0];
+				PTC[ipts[1]].UE[isds[1]]+=dUE_try[1];
+			}
 			nswap+=iswap;
 		}
 	}
@@ -457,15 +471,12 @@ int main(){
 		fprintf(fstr,"%le %le %le ",Sab[0][0]*m0,Sab[1][0]*m0,Sab[1][1]*m0);
 
 		int nswap;
-		/*
+		for(ist=0;ist<nst;ist++) st[ist].xy2crv(rev,PTC);
 		if(i%2==1){
-			for(ist=0;ist<nst;ist++) st[ist].xy2crv(rev,PTC);
-			//nswap=move_water(PTC,0.15,3.5,sbcll,rev, prms);
-			nswap=move_water2(PTC,0.15,3.5,sbcll,rev, prms);
+			nswap=move_water2(PTC,0.03,3.5,sbcll,rev, prms);
 			//printf("nswap=%d/%d\n",nswap,np);
-			st[ist].wsmooth(rev,PTC);
+			//st[ist].wsmooth(rev,PTC);
 		}
-		*/
 		if((ismp%nsmp)==0){
 			dsxx=rev.sxx-rev.sxxb*m0;
 			dsxy=rev.sxy-rev.sxyb*m0;
