@@ -283,7 +283,8 @@ int main(){
 		if(x2<Ymin) Ymin=x2; 
 		PTC[i].setX(x1,x2);
 		PTC[i].mobile=imb;
-		PTC[i].m=mj*(sig*sig/1.5/1.5);	
+		//PTC[i].m=mj*(sig*sig/1.5/1.5);	
+		PTC[i].m=mj;
 		PTC[i].irev[0]=i0;
 		PTC[i].irev[1]=i1;
 		if( sig > 10.0) npl++;
@@ -384,8 +385,6 @@ int main(){
 	SUBCELL *sbcll;
 	for(i=1;i<=prms.Nt;i++){	// Time Step (START) 
 		//for(ist=0;ist<nst;ist++) st[ist].xy2crv(rev,PTC);
-
-		//printf("i=%d\n",i);
 		for(j=0;j<np;j++) PTC[j].scale(i,prms.dt,rev);
 		wll.disp(prms,i);
 		rev.update(i,prms.dt,wll);
@@ -472,11 +471,11 @@ int main(){
 
 		int nswap;
 		for(ist=0;ist<nst;ist++) st[ist].xy2crv(rev,PTC);
-		if(i%2==1){
+		//if(i%2==1){
 			nswap=move_water2(PTC,0.03,3.5,sbcll,rev, prms);
 			//printf("nswap=%d/%d\n",nswap,np);
 			//st[ist].wsmooth(rev,PTC);
-		}
+		//}
 		if((ismp%nsmp)==0){
 			dsxx=rev.sxx-rev.sxxb*m0;
 			dsxy=rev.sxy-rev.sxyb*m0;

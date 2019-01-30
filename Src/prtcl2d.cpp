@@ -133,7 +133,7 @@ double PRTCL::get_sig(double xf[2], int *sgn_xf, double dsig[2]){
 
 
 	//double st=mt/sig;
-	double sig_zero=1.5;
+	double sig_zero=1.35;
 	double st=mt/sig_zero;
 	double sn=mn/(sigs[0]+dsig[0]);
 	*sgn_xf=0;	// xf is located above this molecule 

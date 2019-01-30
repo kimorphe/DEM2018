@@ -30,6 +30,27 @@ void SHEET :: set_prms(
 		r2=dist(PT[i1].x, PT[i3].x);
 	}
 
+
+	int i;
+
+	double ri;
+	for(i=0;i<Np-1;i++){
+		i1=list[i];
+		i2=list[i+1];	
+		ri=dist(PT[i1].x, PT[i2].x);
+		if(i==0) r1=fabs(ri);
+		if(fabs(ri)< r1) r1=ri;
+	}
+	for(i=0;i<Np-2;i++){
+		i1=list[i];
+		i2=list[i+2];	
+		ri=dist(PT[i1].x, PT[i2].x);
+		if(i==0) r2=fabs(ri);
+		if(fabs(ri)< r2) r2=ri;
+	}
+
+	printf("r1,r2=%lf %lf\n",r1,r2);
+
 	sig_w=prms.sig;
 	sig_s=pow(2,0.16666667)*r1;
 	wall=0;
@@ -242,7 +263,7 @@ void SHEET::xy2crv(REV rev, PRTCL *PTC){
 		crv.x[i]=xf.x[0];
 		crv.y[i]=xf.x[1];
 	}
-	crv.smooth(2);
+	//crv.smooth(2);
 	crv.spline();
 	//char cbff[128];
 	//strcpy(cbff,"xydat.out");

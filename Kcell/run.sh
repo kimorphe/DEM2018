@@ -1,3 +1,3 @@
-paint
-kcell.py
+../paint
+imgs.py
 

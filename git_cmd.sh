@@ -17,7 +17,7 @@ git add Kcell/kcell.py
 git add Kcell/ptc.dat
 git add Kcell/run.sh
 git add Kcell/sheet.dat
-git add Kcell/x119.dat
+#git add Kcell/x119.dat
 # Python Codes
 git add Pycodes/
 

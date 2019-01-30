@@ -136,11 +136,6 @@ if __name__=="__main__":
 	nums=fp.readlines();
 	nums=list(map(int,nums));
 
-	fig=plt.figure();
-	ax=fig.add_subplot(111);
-	ax.set_aspect(1.0)
-	ax.grid(True);
-
 	fnum=np.arange(nfile1,nfile2+1,1);
 	fnum=fnum.astype(int)
 	nfile=len(fnum);
@@ -155,20 +150,33 @@ if __name__=="__main__":
 		Sigm=np.hstack( (Sigm,ptc.sigm) );
 		Vx=np.hstack( (Vx,ptc.vx) );
 		Vy=np.hstack( (Vy,ptc.vy) );
-		print("sigb=",0.5*(np.mean(ptc.sigp)+np.mean(ptc.sigm)));
+		#print("sigb=",0.5*(np.mean(ptc.sigp)+np.mean(ptc.sigm)));
 
 	#plt.savefig("x"+str(k)+".png");
+
 	Np=ptc.Np;
 	Sigp=np.reshape(Sigp,[nfile,Np])
 	Sigm=np.reshape(Sigm,[nfile,Np])
 	Vx=np.reshape(Vx,[nfile,Np])
 	Vy=np.reshape(Vy,[nfile,Np])
-	fig=plt.figure()
-	ax=fig.add_subplot(211)
-	bx=fig.add_subplot(212)
-	im1=ax.imshow(Sigm,aspect="auto",origin="lower",cmap="jet");
-	im2=bx.imshow(Sigp,aspect="auto",origin="lower",cmap="jet");
-	#im2=bx.imshow(np.sqrt(Vx*Vx+Vy*Vy),aspect="auto",origin="lower",cmap="jet");
-	#cbar1=fig.colorbar(im1)	
-	#cbar2=fig.colorbar(im2)	
+
+	fig1=plt.figure(figsize=(8,4));
+	ax1=fig1.add_subplot(111);
+
+	fig2=plt.figure(figsize=(8,4))
+	ax2=fig2.add_subplot(111)
+
+	im1=ax1.imshow(Sigm,aspect="auto",origin="lower",cmap="jet",vmin=0.9,vmax=1.8);
+	im2=ax2.imshow(Sigp,aspect="auto",origin="lower",cmap="jet",vmin=0.9,vmax=1.8);
+	ax1.set_xlabel("particle number")
+	ax1.set_ylabel("time steps/200")
+	ax1.set_title("charcteristic length $\sigma^+$ [nm]")
+	ax2.set_xlabel("particle number")
+	ax2.set_ylabel("time steps/200")
+	ax2.set_title("charcteristic length $\sigma^- [nm]$")
+
+	cbar1=fig1.colorbar(im1)	
+	cbar2=fig2.colorbar(im2)	
+	fig1.savefig("sigp.png",bbox_inches="tight")
+	fig2.savefig("sigp.png",bbox_inches="tight")
 	plt.show()

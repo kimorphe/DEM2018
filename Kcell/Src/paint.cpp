@@ -48,52 +48,45 @@ int main(int argc, char *argv[] ){
 	char fndat[128]; // "folder/x***.dat" (particle data file)
 	FILE *fp,*fo;
 
-	int npt,nst,ir0,ir1,ip1,ip2,*iphs;
+	int npt,nst,ir0,ir1,ip1,ip2;
+	int nsum; 
 	int i,j,k,l,N;
-	int icavi, iline,Ndiv[2],nsig;
-	int nsum,endcap;
-	int irev[2],iprd[2];
+	int Ndiv[2],irev[2],iprd[2];
+		//,nsig;
 
 	double xx,yy,sig0,sig,tt;
 	double x1[2],x2[2],Wd[2],Xa[2],Xb[2],Xc[2];
-	double tmp1,tmp2,exx,eyy,*alph;
-	char cbff[128];
+	char cbff[128],dir[128],head[128],tail[128];
 	SHEET *st;
 	PRTCL *PT;
 
 //	----------INPUT DATA -----------
-	strcpy(fname,"mkinp.inp");
+	strcpy(fname,"paint.inp");
 	fp=fopen(fname,"r");
 	if(fp==NULL) show_msg(fname);
 	fgets(cbff,128,fp);
 	fscanf(fp,"%s\n",fndem);
 	fscanf(fp,"%s\n",fnsht);
-	fscanf(fp,"%s\n",fndat);
 	fgets(cbff,128,fp);
-	fscanf(fp,"%s\n",fnout);
-	puts(fndat);
+	fscanf(fp,"%s\n",dir);
 
-	sprintf(fnout,"kcell.dat");
-	puts(fnout);
+	int nf1,nf2,nf_inc;
 	fgets(cbff,128,fp);
-	fscanf(fp,"%d\n",&nsig);
-		alph=(double *)malloc(sizeof(double)*nsig);
-		iphs=(int *)malloc(sizeof(int)*nsig);
-	for(i=0;i<nsig;i++){ 	
-		fscanf(fp,"%lf %d\n",alph+i,iphs+i);
-		printf("alph=%lf iphs=%d\n",alph[i],iphs[i]);
-	}
+	fscanf(fp,"%d %d %d\n",&nf1,&nf2,&nf_inc);
+	printf("%d %d %d\n",nf1,nf2,nf_inc);
+	//fscanf(fp,"%s\n",fndat);
+
 	fgets(cbff,128,fp);
-	fscanf(fp,"%d\n",&endcap);
-	fgets(cbff,128,fp);
-	fscanf(fp,"%d\n",&icavi);
-	fgets(cbff,128,fp);
-	fscanf(fp,"%d\n",&iline);
+	fscanf(fp,"%s\n",head);
+	fscanf(fp,"%s\n",tail);
+	//for(i=nf1;i<=nf2;i++){
+	//	sprintf(fndat,"%s/x%d.dat",dir,i);
+	//	sprintf(fnout,"%s%d.%s",head,i,tail);
+	//}
+
 	fgets(cbff,128,fp);
 	fscanf(fp,"%d %d\n",Ndiv,Ndiv+1);
-
 	fclose(fp);
-
 
 //	----------DEM PARAMETERS--------------
 	sig0=1.5;
@@ -109,7 +102,6 @@ int main(int argc, char *argv[] ){
 	fclose(fp);
 
 //	----------DEM SHEET DATA --------------
-//	strcpy(fname,"sheet.dat");
 	fp=fopen(fnsht,"r");
 	if(fp==NULL) show_msg(fname); 
 	fgets(cbff,128,fp);
@@ -127,7 +119,13 @@ int main(int argc, char *argv[] ){
 	}
 	fclose(fp);
 
-//	------------------------
+	
+	for(int nf=nf1;nf<=nf2;nf+=nf_inc){
+		sprintf(fndat,"%s/x%d.dat",dir,nf);
+		sprintf(fnout,"%s%d.%s",head,nf,tail);
+		printf("%s --> %s\n",fndat,fnout);
+
+//	-----------LOAD PARTICLE MOTION DATA -------------
 	fp=fopen(fndat,"r");
 	if(fp==NULL) show_msg(fndat); 
 
@@ -144,20 +142,19 @@ int main(int argc, char *argv[] ){
 	fgets(cbff,128,fp);
 	double exy,eyx;
 	fscanf(fp,"%lf %lf %lf %lf\n",Wd,Wd+1,&exy,&eyx);
-	printf("Xa=%lf %lf\n",Xa[0],Xa[1]);
-	printf("Wd=%lf %lf\n",Wd[0],Wd[1]);
 	fgets(cbff,128,fp);
 	fscanf(fp,"%d\n",&npt);
-	printf("npt=%d\n",npt);
 
-		PT=(PRTCL *)malloc(sizeof(PRTCL)*npt);
-		printf("npt=%d\n",npt);
+	//printf("Xa=%lf %lf\n",Xa[0],Xa[1]);
+	//printf("Wd=%lf %lf\n",Wd[0],Wd[1]);
+	//printf("npt=%d\n",npt);
+
+	PT=(PRTCL *)malloc(sizeof(PRTCL)*npt);
 
 	fgets(cbff,128,fp);
-	double vx,vy,sigi,sigj;
+	double vx,vy;
 	double sigs[2];
 	for(i=0;i<npt;i++){
-		//fscanf(fp,"%lf %lf %d %d\n",&xx,&yy,&ir0,&ir1);
 		fscanf(fp,"%d %d %le %le %le %le %le %le\n",&ir0,&ir1,&xx,&yy,&vx,&vy,sigs,sigs+1);
 		PT[i].setX(xx,yy);
 		PT[i].irev[0]=ir0;
@@ -166,67 +163,15 @@ int main(int argc, char *argv[] ){
 		PT[i].sigs[1]=sigs[1];
 	}
 
-	/*
-	fprintf(fo,"# time (ps) in DEM simulation\n");
-	fprintf(fo,"%lf\n",tt);
-	fprintf(fo,"# Xa[2], Xb[2]\n");
-	fprintf(fo," %lf %lf\n",Xa[0],Xa[1]);
-	fprintf(fo," %lf %lf\n",Xa[0]+Wd[0],Xa[1]+Wd[1]);
-	fprintf(fo,"# Periodic Boundary (1:yes, 2:No) x,y-directions\n");
-	fprintf(fo,"%d %d\n",iprd[0],iprd[1]);
-	fprintf(fo,"# Ndiv[0], Ndiv[1]\n");
-	fprintf(fo," %d %d\n",Ndiv[0],Ndiv[1]);
-	*/
 	Dom2D dom(Ndiv[0],Ndiv[1]);
 	dom.Xa[0]=Xa[0]; dom.Xa[1]=Xa[1];
 	dom.Xb[0]=Xa[0]+Wd[0];
 	dom.Xb[1]=Xa[1]+Wd[1];
+	dom.time=tt;
 	dom.set_dx();
 
 
-/*
-	if(icavi==1){
-		fprintf(fo,"##Circ\n");
-		fprintf(fo,"%d \n",npt*nsig);
-		for(l=0;l<nsig;l++){
-			sig=sig0*alph[l];
-			for(i=0;i<npt;i++) fprintf(fo,"%lf %lf %lf %d\n",PT[i].x[0],PT[i].x[1],sig,iphs[l]);
-		}
-		fprintf(fo,"##END\n");
-	}
-
-	double t0=0.9*1.0;
-	if(iline==1){
-		fprintf(fo,"##RECT\n");
-		fprintf(fo,"%d\n",nsum*nsig);
-		for(l=0;l<nsig;l++){
-//			sig=sig0*alph[l];
-		for(i=0;i<nst;i++){
-		for(j=0;j<st[i].Np-1;j++){
-			ip1=st[i].list[j];
-			ip2=st[i].list[j+1];
-			for(k=0;k<2;k++){
-				x1[k]=PT[ip1].x[k];
-				x2[k]=PT[ip2].x[k];
-				if(iprd[k]==1){
-					irev[k]=PT[ip2].irev[k]-PT[ip1].irev[k];
-					x2[k]+=(irev[k]*Wd[k]);
-				}	
-			}
-			sig=t0+(sigs[0]-t0)*alph[l];
-			if(l==1) sig=t0;
-			fprintf(fo,"%lf %lf  %lf %lf  %lf  %d %d\n",x1[0],x1[1],x2[0],x2[1],sig,endcap,iphs[l]);
-
-		}
-		}
-		}
-	fprintf(fo,"##END\n");
-	}
-	fclose(fp);
-	fclose(fo);
-*/
-
-	Curve2D *crvs,crv,*hgts;
+	Curve2D *crvs,*hgts;
 	crvs=(Curve2D *)malloc(sizeof(Curve2D)*nst);
 	hgts=(Curve2D *)malloc(sizeof(Curve2D)*nst);
 		for(i=0;i<nst;i++){
@@ -234,10 +179,8 @@ int main(int argc, char *argv[] ){
 			hgts[i].init(st[i].Np);
 		for(j=0;j<st[i].Np;j++){
 			ip1=st[i].list[j];
-			//ip2=st[i].list[j+1];
 			for(k=0;k<2;k++){
 				x1[k]=PT[ip1].x[k]+PT[ip1].irev[k]*Wd[k];
-				//x2[k]=PT[ip2].x[k]+PT[ip2].irev[k]*Wd[k];
 			}
 			//printf("%lf %lf\n",x1[0],x1[1]);
 			crvs[i].x[j]=x1[0];
@@ -287,7 +230,6 @@ int main(int argc, char *argv[] ){
 		//puts("");
 	};
 	for(i=0;i<nst;i++){
-		//crv=crvs[i];
 	for(j=0;j<st[i].Np-1;j++){
 		x1[0]=crvs[i].x[j];
 		x1[1]=crvs[i].y[j];
@@ -296,18 +238,20 @@ int main(int argc, char *argv[] ){
 		dom.draw_line(x1,x2,2,1);
 	}
 	}	
-
 	dom.out_kcell(fnout);
+
+	free(crvs);
+	free(hgts);
+
+	}
 	return(0);
 }
-
 
 void SHEET:: init(int N){
 
 	Np=N;
 	list=(int *)malloc(sizeof(int)*Np);
 };
-
 
 void PRTCL::init(){
 	x[0]=0.0; x[1]=0.0;

@@ -1,12 +1,14 @@
-Source codes originally imported from Mixutre/Src
+Source codes developed/extended originally from Mixutre/Src
 
-Working Directory and Test Data to add following functions:
+(Working Directory and Test Data to add following functions)
+
+New Features:
  v Nonuniform hydrated water distribution
- v Anisotropic Van derr Waals force field
+ v Anisotropic Van der Waals force field
  v Monte Carlo moisture transport simulation
  
 
-How to run ?
+How to run: 
 
 0. Minimal input dataset:
  gen_sheet.inp
@@ -26,3 +28,24 @@ How to run ?
  --> ptcl.out
  (--> cell_const.dat)
  --> x***.dat 
+
+3. Test Data
+ Move to DEM2018/TestData/Input
+
+ Run following programs successively.
+
+ ../../gen_sheet
+ ../../dem
+
+ Simulation results (x***.dat) can shown in the following ways. 
+
+(a) Use Pycodes/pplot.py 
+    --> clay sheet distribution and deformations are drawn as a series of snapshots.  
+
+(b) Create pixel image and then drawn by Python
+    
+  Run following programs succesively in DEM2018/TestData. 
+  ../paint 
+  ../Pycodes/imgs.py 
+  
+  To run "paint", input data file named "paint.inp" is required  

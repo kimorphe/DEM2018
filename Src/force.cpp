@@ -37,6 +37,7 @@ double STF1(PRTCL p1, PRTCL p2, double *Fn, double r0, double K1, REV rev, doubl
 	Sab[0][0]=n12[0]*n12[0]*(-Fr);
 	Sab[1][0]=n12[1]*n12[0]*(-Fr);
 	Sab[1][1]=n12[1]*n12[1]*(-Fr);
+	//printf("r0=%lf F=%lf %lf\n",r0,Fn[0],Fn[1]);
 
 
 	UE*=(r-r0);
