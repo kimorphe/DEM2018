@@ -6,6 +6,7 @@ New Features:
  v Nonuniform hydrated water distribution
  v Anisotropic Van der Waals force field
  v Monte Carlo moisture transport simulation
+ v Simulation may be restarted
  
 
 How to run: 
@@ -36,6 +37,17 @@ How to run:
 
  ../../gen_sheet
  ../../dem
+
+ Note1: 
+   To able/disable water transport; 
+   Set "mvw" parameter to 1/0 in "dem.inp"
+ Note2: 
+   To restart your simulation: 
+    Set "rstat" parameter to 1 in "dem.inp".
+    Also, save "x***.dat" as "restart0.dat" in your "TestData/Input" folder. 
+    The DEM code imports the initial condition from "restart0.dat". 
+    You would probably need to edit "dem.inp" to impose a new set of simulation 
+	parameters, say boundary condition. 
 
  Simulation results (x***.dat) can shown in the following ways. 
 

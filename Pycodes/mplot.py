@@ -3,6 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import sys
+from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
+from mpl_toolkits.axes_grid1.colorbar import colorbar
+from mpl_toolkits.axes_grid1 import ImageGrid
 
 class SHEET:
 	def __init__(self,npnt):
@@ -72,14 +75,12 @@ class PTCS:
 		fp.close();
 
 	def plot(self,ax,nps,Movie=False):
-		if Movie == False:
-			ax.cla()
+		#if Movie == False: ax.cla()
 	
 		clrs=["r","b","g","c","y","m","k"];
 		nclrs=len(clrs);
 		n1=0;
 		st=0;
-
 
 		plts=[];
 		for n in nps:
@@ -113,63 +114,50 @@ class PTCS:
 if __name__=="__main__":
 
 	nfile1=0;
-	nfile2=25; inc=1;
+	nfile2=251; inc=10;
 
-	args=sys.argv
-	narg=len(args)
-	if  narg > 1:
-		nfile1=int(args[1]);
-	if  narg > 2:
-		nfile2=int(args[2]);
-
-	#imv=int( raw_input("Movie(0) or Snapshots(1) ?"));
-	imv=int( input("Movie(0) or Snapshots(1) ?"));
-	if imv==0:
-		MV=True;
-	else:
-		MV=False;
+	fnum=np.arange(nfile1,nfile2+1,inc);
+	fnum=fnum.astype(int)
 
 	fp=open("ptc_nums.dat");
 	nums=fp.readlines();
 	nums=list(map(int,nums));
 
-	fig=plt.figure();
-	ax=fig.add_subplot(111);
-	ax.set_aspect(1.0)
-	ax.grid(True);
+	fig=plt.figure(figsize=[8,8]);
 
-	#fnum=np.linspace(0,100,101);
-	fnum=np.arange(nfile1,nfile2+1,inc);
-	fnum=fnum.astype(int)
-
-	if MV:
-		ims=[];
-		Writer=animation.writers['ffmpeg']	
-		writer=Writer(fps=10,metadata=dict(artist="Me"),bitrate=1800)
-
-	for k in fnum:
-		fname="x"+str(k)+".dat";
-		ptc=PTCS(fname);
-		plts=ptc.plot(ax,nums,Movie=MV);
+	nrows=3
+	ncols=3;
+	nfig=nrows*ncols
+	fnums=[20,40,60,80,100,120,140,160,180]
+	grid=ImageGrid(fig, 111,
+		nrows_ncols=(nrows,ncols),
+		axes_pad=0.40,
+		share_all=True
+                #,
+		#cbar_location="bottom", #right/left, top/bottom
+		#cbar_mode="single",
+		#cbar_size="8%",
+		#cbar_pad=0.25,
+		)
+	k=0
+	save_fig=False
+	MV=False
+	for ax in grid:
+		fname="x"+str(fnums[k])+".dat";
+		ptc=PTCS(fname);plts=ptc.plot(ax,nums,Movie=MV);
 		ax.set_xlim([0,200]);
 		ax.set_ylim([0,200]);
-		ax.set_xlabel("x [nm]",fontsize="12")
-		ax.set_ylabel("y [nm]",fontsize="12")
-		title=ax.text(200,0,fname+", t="+str(ptc.time)+"[ps]",ha="right")
-		plts.append(title);
+		if k >= nfig-ncols:
+			ax.set_xlabel("x [nm]",fontsize="10")
+		if k%ncols ==0:
+			ax.set_ylabel("y [nm]",fontsize="10")
+		txt="t="+str(ptc.time)+"[ps]"
+		ax.set_title(txt,fontsize=10)
 		ax.grid(True)
+		k+=1;
+        #ax.cax.colorbar(im)
+	ax.cax.toggle_label(True)
+	if save_fig:
+                plt.savefig("pplot.png",bbox_inches="tight");
 
-		if MV:
-			ims.append(plts);
-		else:
-			plt.savefig("x"+str(k)+".png",bbox_inches="tight");
-			#plt.pause(0.1);
-	plt.savefig("x"+str(k)+".png",bbox_inches="tight");
-
-	if MV:
-		fn="movie.mp4"
-		ani=animation.ArtistAnimation(fig,ims,interval=1,repeat_delay=100)
-		print(" Wait, creating movie file ...");
-		ani.save(fn,writer=writer)
-		print(" Done.")
-		print(" Play "+fn+" (e.g. by typing 'totem "+fn+"')")
+	plt.show()

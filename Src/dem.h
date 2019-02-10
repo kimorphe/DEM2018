@@ -69,6 +69,7 @@ class CNTRL{	// DEM implementation controle parameters
 		double eta2;
 		double K1,K2;	// spring constants
 		double sig;	// characteristic constants	
+		int mvw;	// move water (1: yes, 0:No)
 		double Eps;	// potential amplitude (normalized)
 		double Eps0;	// potential amplitude [kg (m/s)^2]
 		double Xa[2];	// cell lower left corner 

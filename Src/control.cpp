@@ -23,6 +23,7 @@ void CNTRL :: load(char *fname){
 	fgets(cbff,128,fp);
 	fgets(Dir,128,fp);
 
+
 	fgets(cbff,128,fp);
 	fscanf(fp,"%d\n",&rstat);
 	fgets(cbff,128,fp);
@@ -45,6 +46,10 @@ void CNTRL :: load(char *fname){
 	fscanf(fp,"%lf %lf\n",&K1, &K2); // [kg/s^2]
 	fgets(cbff,128,fp);
 	fscanf(fp,"%lf\n",&sig);	// [nm]
+
+	fgets(cbff,128,fp);
+	fscanf(fp,"%d\n",&mvw);	// 0: water fixed, 1: move 
+	printf("mvw=%d\n",mvw);
 
 	fgets(cbff,128,fp);
 	fscanf(fp,"%lf %lf\n",&vmin,&vmax);

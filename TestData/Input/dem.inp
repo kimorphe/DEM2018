@@ -16,6 +16,8 @@ restart0.dat
  2000.0 4000.0 
 # sig [nm] (characterstic length of L-J potential)
  1.5
+# mvw ( move water 1:yes, 0:No)
+ 0
 # Initial velocity [nm/ps] (min, max)
  0.0 0.0
 # Temperature control (1:Yes, 0: No), T_set[K]

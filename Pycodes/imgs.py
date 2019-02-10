@@ -26,7 +26,7 @@ class KCELL:
         self.fname=fname;
         fp.close();
 
-    def show(self,ax,tlt=""):
+    def show(self,ax,tlt="",tight=False):
         #im=ax.imshow(K,origin="lower",extent=[Xa[0],Xb[0],Xa[1],Xb[1]],interpolation="none",vmin=0,vmax=2,cmap="gray");
         if self.nshow>0:
             plt.cla()
@@ -36,11 +36,12 @@ class KCELL:
         ax.set_xlabel("x [nm]");
         ax.set_ylabel("y [nm]");
         if self.nshow==0:
-            plt.colorbar(im);
+            #plt.colorbar(im);
             self.Xa0=Xa;
             self.Xb0=Xb;
-        ax.set_xlim((self.Xa0[0],self.Xb0[0]))
-        ax.set_ylim((self.Xa0[1],self.Xb0[1]))
+        if not tight:
+            ax.set_xlim((self.Xa0[0],self.Xb0[0]))
+            ax.set_ylim((self.Xa0[1],self.Xb0[1]))
         ax.set_title(self.fname+", t="+str(self.time)+"[ps]")
         self.nshow+=1;
     def export(self,fig,fname):
@@ -58,7 +59,7 @@ if __name__=="__main__":
     for k in nums:
         fname="k"+str(k)+".dat"
         K.load(fname);
-        K.show(ax)
+        K.show(ax,tight=True)
         fnimg=fname.replace(".dat",".png");
         print(fname+" --->"+fnimg)
         K.export(fig,fnimg)

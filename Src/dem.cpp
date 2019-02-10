@@ -472,10 +472,10 @@ int main(){
 		int nswap;
 		for(ist=0;ist<nst;ist++) st[ist].xy2crv(rev,PTC);
 		//if(i%2==1){
+		if(prms.mvw==1){
 			nswap=move_water2(PTC,0.03,3.5,sbcll,rev, prms);
-			//printf("nswap=%d/%d\n",nswap,np);
 			//st[ist].wsmooth(rev,PTC);
-		//}
+		}
 		if((ismp%nsmp)==0){
 			dsxx=rev.sxx-rev.sxxb*m0;
 			dsxy=rev.sxy-rev.sxyb*m0;
@@ -687,6 +687,7 @@ void restart(
 	char cbff[128];
 	int i0,i1,i;
 	double x1,x2,v1,v2,r1,r2;
+	double sigp,sigm;
 	double Xa[2],Wd[4],Xc[2];
 
 
@@ -713,10 +714,12 @@ void restart(
 	fgets(cbff,128,fp);
 	fgets(cbff,128,fp);
 	for(i=0;i<np;i++){
-		fscanf(fp,"%d %d %le %le %le %le\n",&i0,&i1,&x1,&x2,&v1,&v2);
+		fscanf(fp,"%d %d %le %le %le %le %le %le\n",&i0,&i1,&x1,&x2,&v1,&v2,&sigp,&sigm);
 		PTC[i].x[0]=x1; PTC[i].x[1]=x2;
 		PTC[i].v[0]=v1; PTC[i].v[1]=v2;
 		PTC[i].irev[0]=i0; PTC[i].irev[1]=i1;
+		PTC[i].sigs[0]=sigp;
+		PTC[i].sigs[1]=sigm;
 	}
 
 	fgets(cbff,128,fp);
