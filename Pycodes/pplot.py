@@ -113,7 +113,7 @@ class PTCS:
 if __name__=="__main__":
 
 	nfile1=0;
-	nfile2=25; inc=1;
+	nfile2=250; inc=10;
 
 	args=sys.argv
 	narg=len(args)

@@ -93,7 +93,7 @@ int main(int argc, char *argv[] ){
 	fp=fopen(fndem,"r"); //	"dem.inp"
 	//int nhead=17;
 	int nhead=26;
-	if(fp==NULL) show_msg(fname); 
+	if(fp==NULL) show_msg(fndem); 
 	for(i=0;i<nhead;i++){
 		fgets(cbff,128,fp);
 	}
@@ -103,7 +103,7 @@ int main(int argc, char *argv[] ){
 
 //	----------DEM SHEET DATA --------------
 	fp=fopen(fnsht,"r");
-	if(fp==NULL) show_msg(fname); 
+	if(fp==NULL) show_msg(fnsht); 
 	fgets(cbff,128,fp);
 	fscanf(fp,"%d\n",&nst);
 		st=(SHEET *)malloc(nst*sizeof(SHEET));
