@@ -1,0 +1,14 @@
+# particle data files
+./dem.inp
+./sheet.dat
+# Particle motion data folder 
+../
+# Output data folder
+../
+# Particle motion data files x***.dat (file numbers: n1,n2,n_inc)
+ 0 251 10
+# output file (prefix, extention)
+k
+dat
+# Ndiv[0:1]: pixel counts
+ 500 500

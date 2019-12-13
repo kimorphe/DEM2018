@@ -17,10 +17,21 @@ git add Kcell/kcell.py
 git add Kcell/ptc.dat
 git add Kcell/run.sh
 git add Kcell/sheet.dat
-#git add Kcell/x119.dat
 # Python Codes
 git add Pycodes/
+# Codes & Data for Texture Analysis
+git add Texture/Src/*.cpp
+git add Texture/Src/*.h
+git add Texture/Src/*.py
+git add Texture/Src/makefile
 
+git add Texture/Inputs/dem.inp
+git add Texture/Inputs/gen_sheet.inp
+git add Texture/Inputs/wall.dat
+git add Texture/Inputs/paint.inp
+
+git add Texture/x240.dat
+git add Texture/x250.dat
 
 git commit 
 
