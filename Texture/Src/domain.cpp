@@ -74,6 +74,14 @@ void Dom2D::set_dx(){
 	iprd[0]=0;
 	iprd[1]=0;
 };
+void Dom2D::set_val(int val){
+	int i,j;
+	for(i=0; i<Ndiv[0]; i++){
+	for(j=0; j<Ndiv[1]; j++){
+		kcell[i][j]=val;
+	}
+	}
+};
 Dom2D::Dom2D(){		// Constructor 1
 	int i,ndim=2;
 	for(i=0;i<ndim;i++){

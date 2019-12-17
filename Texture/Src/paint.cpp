@@ -41,10 +41,12 @@ class PRTCL{
 
 int main(int argc, char *argv[] ){
 
+	double pi=atan(1.0)*4.0;
 	char fname[128];
 	char fnout[128]; // output file 
-	char fndem[128]; // "folder/dem.inp"
-	char fnsht[128]; // "folder/sheet.dat"
+	char fnout2[128]; // output file 
+	char fndem[128]; // "folder/dem.inp" (DEM main input)
+	char fnsht[128]; // "folder/sheet.dat" (Clay sheet data)
 	char fndat[128]; // "folder/x***.dat" (particle data file)
 	FILE *fp,*fo;
 
@@ -60,46 +62,40 @@ int main(int argc, char *argv[] ){
 	SHEET *st;
 	PRTCL *PT;
 
-//	----------INPUT DATA -----------
+//   ----------INPUT DATA (control data)-----------
 	strcpy(fname,"paint.inp");
 	fp=fopen(fname,"r");
 	if(fp==NULL) show_msg(fname);
 	fgets(cbff,128,fp);
-	fscanf(fp,"%s\n",fndem);
-	fscanf(fp,"%s\n",fnsht);
+	fscanf(fp,"%s\n",fndem); // DEM data file
+	fscanf(fp,"%s\n",fnsht); // sheet data file
 	fgets(cbff,128,fp);
-	fscanf(fp,"%s\n",dir);
+	fscanf(fp,"%s\n",dir);	// data directory
 	fgets(cbff,128,fp);
-	fscanf(fp,"%s\n",dir_out);
+	fscanf(fp,"%s\n",dir_out); // output data directory
 
 	int nf1,nf2,nf_inc;
 	fgets(cbff,128,fp);
-	fscanf(fp,"%d %d %d\n",&nf1,&nf2,&nf_inc);
+	fscanf(fp,"%d %d %d\n",&nf1,&nf2,&nf_inc); // File No.s to be read
 	printf("%d %d %d\n",nf1,nf2,nf_inc);
-	//fscanf(fp,"%s\n",fndat);
 
 	fgets(cbff,128,fp);
-	fscanf(fp,"%s\n",head);
-	fscanf(fp,"%s\n",tail);
-	//for(i=nf1;i<=nf2;i++){
-	//	sprintf(fndat,"%s/x%d.dat",dir,i);
-	//	sprintf(fnout,"%s%d.%s",head,i,tail);
-	//}
+	fscanf(fp,"%s\n",head); // data file name prefix 
+	fscanf(fp,"%s\n",tail); // data file name extension
 
 	fgets(cbff,128,fp);
-	fscanf(fp,"%d %d\n",Ndiv,Ndiv+1);
+	fscanf(fp,"%d %d\n",Ndiv,Ndiv+1); // Number of pixels
 	fclose(fp);
 
 //	----------DEM PARAMETERS--------------
 	sig0=1.5;
 	fp=fopen(fndem,"r"); //	"dem.inp"
-	//int nhead=17;
-	int nhead=26;
+	int nhead=26; // number of header lines (to be skipped)
 	if(fp==NULL) show_msg(fndem); 
 	for(i=0;i<nhead;i++){
 		fgets(cbff,128,fp);
 	}
-	fscanf(fp,"%d %d\n",iprd,iprd+1);
+	fscanf(fp,"%d %d\n",iprd,iprd+1); // periodic B.C. 
 
 	fclose(fp);
 
@@ -125,7 +121,8 @@ int main(int argc, char *argv[] ){
 	for(int nf=nf1;nf<=nf2;nf+=nf_inc){
 		sprintf(fndat,"%s/x%d.dat",dir,nf);
 		sprintf(fnout,"%s%s%d.%s",dir_out,head,nf,tail);
-		printf("%s --> %s\n",fndat,fnout);
+		sprintf(fnout2,"%s%sn%d.%s",dir_out,head,nf,tail);
+		printf("%s --> %s\n",fndat,fnout); // Input,Output data files
 
 //	-----------LOAD PARTICLE MOTION DATA -------------
 	fp=fopen(fndat,"r");
@@ -147,10 +144,6 @@ int main(int argc, char *argv[] ){
 	fgets(cbff,128,fp);
 	fscanf(fp,"%d\n",&npt);
 
-	//printf("Xa=%lf %lf\n",Xa[0],Xa[1]);
-	//printf("Wd=%lf %lf\n",Wd[0],Wd[1]);
-	//printf("npt=%d\n",npt);
-
 	PT=(PRTCL *)malloc(sizeof(PRTCL)*npt);
 
 	fgets(cbff,128,fp);
@@ -166,11 +159,22 @@ int main(int argc, char *argv[] ){
 	}
 
 	Dom2D dom(Ndiv[0],Ndiv[1]);
-	dom.Xa[0]=Xa[0]; dom.Xa[1]=Xa[1];
+	dom.Xa[0]=Xa[0]; 
+	dom.Xa[1]=Xa[1];
 	dom.Xb[0]=Xa[0]+Wd[0];
 	dom.Xb[1]=Xa[1]+Wd[1];
 	dom.time=tt;
 	dom.set_dx();
+
+	Dom2D Th(Ndiv[0],Ndiv[1]);
+	Th.Xa[0]=Xa[0]; 
+	Th.Xa[1]=Xa[1];
+	Th.Xb[0]=Xa[0]+Wd[0];
+	Th.Xb[1]=Xa[1]+Wd[1];
+	Th.time=tt;
+	Th.set_dx();
+	Th.set_val(-30);
+
 
 
 	Curve2D *crvs,*hgts;
@@ -185,34 +189,35 @@ int main(int argc, char *argv[] ){
 				x1[k]=PT[ip1].x[k]+PT[ip1].irev[k]*Wd[k];
 			}
 			//printf("%lf %lf\n",x1[0],x1[1]);
-			crvs[i].x[j]=x1[0];
-			crvs[i].y[j]=x1[1];
-			hgts[i].x[j]=PT[ip1].sigs[0];
-			hgts[i].y[j]=PT[ip1].sigs[1];
+			crvs[i].x[j]=x1[0]; // parctcle x-cooridnate
+			crvs[i].y[j]=x1[1]; // particle y-coordinate
+			hgts[i].x[j]=PT[ip1].sigs[0]; // hydrated water thickness 
+			hgts[i].y[j]=PT[ip1].sigs[1]; // 
 		}
-			crvs[i].spline();
-			hgts[i].spline();
-		//puts("");
+			crvs[i].spline(); // generate spline curves
+			hgts[i].spline(); 
 		}
 
 	double ss,ds;
 	int Ns;
 	double dxds,dyds,sigp,sigm;
 	Vec2 tb,nb;
+	double th_n; 
+	int ix,iy;
 	for(i=0;i<nst;i++){
 		Ns=crvs[i].np*100;
 		ds=double(crvs[i].np-1)/(Ns-1);
 		for(j=0;j<Ns;j++){
 			ss=ds*j;
-			xx=crvs[i].intplx(ss);
+			xx=crvs[i].intplx(ss); 
 			yy=crvs[i].intply(ss);
 			dxds=crvs[i].dxds(ss);
 			dyds=crvs[i].dyds(ss);
 
-			tb.set(dxds,dyds);
+			tb.set(dxds,dyds);	// tangential vector
 			tt=tb.len();
-			tb.div(tt);
-			nb.set(-tb.x[1],tb.x[0]);
+			tb.div(tt);	// unit tangential vector
+			nb.set(-tb.x[1],tb.x[0]);	// unit normal vector
 			//nb.times(sig);
 			//printf("%lf %lf %lf\n",xx,yy,ss);
 			sigp=hgts[i].intplx(ss)*0.5;
@@ -221,13 +226,23 @@ int main(int argc, char *argv[] ){
 			x1[1]=yy+nb.x[1]*sigp;
 			x2[0]=xx-nb.x[0]*sigm;
 			x2[1]=yy-nb.x[1]*sigm;
-			dom.draw_line(x1,x2,1,1);
+			dom.draw_line(x1,x2,1,1); // paint pore water (fluid phase)
 
 			x1[0]=xx+nb.x[0]*0.45;
 			x1[1]=yy+nb.x[1]*0.45;
 			x2[0]=xx-nb.x[0]*0.45;
 			x2[1]=yy-nb.x[1]*0.45;
-			dom.draw_line(x1,x2,2,1);
+			dom.draw_line(x1,x2,2,1); // paint clay sheet (solid phase)
+
+			if(abs(nb.x[0])>1.0) nb.x[0]=1.0;
+			th_n=acos(abs(nb.x[0]))/pi*180.0;
+			ix=int((xx-Xa[0])/Th.dx[0]);
+			iy=int((yy-Xa[1])/Th.dx[1]);
+			if(ix < 0) ix+=Ndiv[0];
+			if(iy < 0) iy+=Ndiv[1];
+			if(ix >=Ndiv[0]) ix-=Ndiv[0];
+			if(iy >=Ndiv[1]) iy-=Ndiv[1];
+			Th.kcell[ix][iy]=int(th_n);
 		};
 		//puts("");
 	};
@@ -237,10 +252,11 @@ int main(int argc, char *argv[] ){
 		x1[1]=crvs[i].y[j];
 		x2[0]=crvs[i].x[j+1];
 		x2[1]=crvs[i].y[j+1];	
-		dom.draw_line(x1,x2,2,1);
+		dom.draw_line(x1,x2,2,1); // paint clay sheet (solid phase)
 	}
 	}	
 	dom.out_kcell(fnout);
+	Th.out_kcell(fnout2);
 
 	free(crvs);
 	free(hgts);

@@ -32,8 +32,9 @@ class KCELL:
             plt.cla()
         Xa=self.Xa;
         Xb=self.Xb;
-        im=ax.imshow(self.K,origin="lower",extent=[Xa[0],Xb[0],Xa[1],Xb[1]],interpolation="bilinear",vmin=0,vmax=2)
+        #im=ax.imshow(self.K,origin="lower",extent=[Xa[0],Xb[0],Xa[1],Xb[1]],interpolation="bilinear",vmin=-30,vmax=70,cmap="gnuplot")
         ax.set_xlabel("x [nm]");
+        im=ax.imshow(self.K,origin="lower",extent=[Xa[0],Xb[0],Xa[1],Xb[1]],interpolation="bilinear",vmin=0,vmax=500,cmap="jet")
         ax.set_ylabel("y [nm]");
         if self.nshow==0:
             plt.colorbar(im);
@@ -45,6 +46,18 @@ class KCELL:
         self.nshow+=1;
     def export(self,fig,fname):
         fig.savefig(fname,bbox_inches="tight")
+
+    def bin_filt(self):
+        indx=self.K>=0;
+        self.K[indx]=1
+        indx=self.K<0;
+        self.K[indx]=0
+
+    def FFT2D(self):
+        K=np.fft.fft2(self.K)
+        K=np.fft.fftshift(K)
+        self.K=np.abs(K)
+
     
 
 if __name__=="__main__":
@@ -56,11 +69,21 @@ if __name__=="__main__":
 
     K=KCELL();
     for k in nums:
-        fname="k"+str(k)+".dat"
+        fname="kn"+str(k)+".dat"
         K.load(fname);
+        """
         K.show(ax)
         fnimg=fname.replace(".dat",".png");
         print(fname+" --->"+fnimg)
         K.export(fig,fnimg)
+        """
+
+        K.bin_filt()
+        K.FFT2D()
+        K.show(ax)
+        fnimg=fname.replace(".dat","k.png");
+        print(fname+" --->"+fnimg)
+        K.export(fig,fnimg)
+
     
     #plt.show();

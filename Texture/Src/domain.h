@@ -55,6 +55,7 @@ class Dom2D{
 		int count(int i);
 		double time;	// time (ps) in DEM simulation
 		int draw_line(double x1[2], double x2[2],int iphs, int lw);
+		void set_val(int val);
 	private:
 		void mem_alloc();
 };
