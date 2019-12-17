@@ -173,7 +173,7 @@ int main(int argc, char *argv[] ){
 	Th.Xb[1]=Xa[1]+Wd[1];
 	Th.time=tt;
 	Th.set_dx();
-	Th.set_val(-30);
+	Th.set_val(-90);
 
 
 
@@ -203,7 +203,7 @@ int main(int argc, char *argv[] ){
 	double dxds,dyds,sigp,sigm;
 	Vec2 tb,nb;
 	double th_n; 
-	int ix,iy;
+	int ix,iy,indx[2];
 	for(i=0;i<nst;i++){
 		Ns=crvs[i].np*100;
 		ds=double(crvs[i].np-1)/(Ns-1);
@@ -234,17 +234,21 @@ int main(int argc, char *argv[] ){
 			x2[1]=yy-nb.x[1]*0.45;
 			dom.draw_line(x1,x2,2,1); // paint clay sheet (solid phase)
 
-			if(abs(nb.x[0])>1.0) nb.x[0]=1.0;
-			th_n=acos(abs(nb.x[0]))/pi*180.0;
+			if(nb.x[0] > 1.0) nb.x[0]=1.0;
+			if(nb.x[0] <-1.0) nb.x[0]=-1.0;
+			th_n=acos(nb.x[0])/pi*180.0;
+			if(nb.x[1]<0.0) th_n=360.0-th_n;
+			Th.xy2ij(xx,yy,indx);
+			/*
 			ix=int((xx-Xa[0])/Th.dx[0]);
 			iy=int((yy-Xa[1])/Th.dx[1]);
 			if(ix < 0) ix+=Ndiv[0];
 			if(iy < 0) iy+=Ndiv[1];
 			if(ix >=Ndiv[0]) ix-=Ndiv[0];
 			if(iy >=Ndiv[1]) iy-=Ndiv[1];
-			Th.kcell[ix][iy]=int(th_n);
+			*/
+			Th.kcell[indx[0]][indx[1]]=(int(th_n)%180);
 		};
-		//puts("");
 	};
 	for(i=0;i<nst;i++){
 	for(j=0;j<st[i].Np-1;j++){

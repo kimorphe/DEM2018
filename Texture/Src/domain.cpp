@@ -82,6 +82,17 @@ void Dom2D::set_val(int val){
 	}
 	}
 };
+void Dom2D::xy2ij(double x, double y, int indx[2]){
+	int ix,iy; 
+	ix=int((x-Xa[0])/dx[0]);
+	iy=int((y-Xa[1])/dx[1]);
+	while(ix < 0) ix+=Ndiv[0];
+	while(iy < 0) iy+=Ndiv[1];
+	while(ix >=Ndiv[0]) ix-=Ndiv[0];
+	while(iy >=Ndiv[1]) iy-=Ndiv[1];
+	indx[0]=ix;
+	indx[1]=iy;
+};
 Dom2D::Dom2D(){		// Constructor 1
 	int i,ndim=2;
 	for(i=0;i<ndim;i++){
