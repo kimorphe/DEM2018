@@ -29,6 +29,7 @@ git add Texture/Inputs/dem.inp
 git add Texture/Inputs/gen_sheet.inp
 git add Texture/Inputs/wall.dat
 git add Texture/Inputs/paint.inp
+git add Texture/Inputs/xrd.inp
 
 git add Texture/x240.dat
 git add Texture/x250.dat

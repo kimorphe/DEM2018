@@ -1,5 +1,10 @@
+all: paint xrd
+xrd: xrd.o domain.o mscs.o rect.o spline.o
+	g++ -o xrd xrd.o domain.o mscs.o rect.o spline.o 
 paint: paint.o domain.o mscs.o rect.o spline.o
 	g++ -o paint paint.o domain.o mscs.o rect.o spline.o 
+xrd.o: xrd.cpp 
+	g++ -c xrd.cpp
 paint.o: paint.cpp 
 	g++ -c paint.cpp
 spline.o: spline.cpp 
