@@ -42,12 +42,16 @@ class DEM_DATA{
 	public:
 		SHEET *st;
 		PRTCL *PT;
+		Curve2D *crvs,*hgts;
 		void load_dem_inp(char fname[128]);
 		void load_sheet_data(char fname[128]);
-
+		void load_ptc_data(char fname[128]);
+		void spline_fit();
 		int iprd[2];
 
 		int nst; 
+		int npt;
+		Dom2D dom;
 	private:
 };
 
@@ -85,6 +89,44 @@ void DEM_DATA::load_sheet_data(char fname[128]){
 		for(j=0;j<N;j++) st[i].list[j]--;
 		fgets(cbff,2,fp);
 	}
+	fclose(fp);
+};
+void DEM_DATA::load_ptc_data(char fname[128]){
+	char cbff[128];
+	FILE *fp=fopen(fname,"r"); // "x***.dat"
+	if(fp==NULL) show_msg(fname); 
+
+	fgets(cbff,128,fp);
+	fscanf(fp,"%lf\n",&dom.time);
+	fgets(cbff,128,fp);
+	fgets(cbff,128,fp);
+	fgets(cbff,128,fp);
+	fscanf(fp,"%lf %lf\n",dom.Xa,dom.Xa+1);
+	fgets(cbff,128,fp);
+	double exy,eyx;
+	double Wd[2];
+	fscanf(fp,"%lf %lf %lf %lf\n",Wd,Wd+1,&exy,&eyx);
+	fgets(cbff,128,fp);
+	fscanf(fp,"%d\n",&npt);
+	dom.Xb[0]=dom.Xa[0]+Wd[0];
+	dom.Xb[1]=dom.Xa[1]+Wd[1];
+	//;dom.set_dx();
+
+	PT=(PRTCL *)malloc(sizeof(PRTCL)*npt);
+
+	fgets(cbff,128,fp);
+	int i,ir0,ir1;
+	double xx,yy,vx,vy;
+	double sigs[2];
+	for(i=0;i<npt;i++){
+		fscanf(fp,"%d %d %le %le %le %le %le %le\n",&ir0,&ir1,&xx,&yy,&vx,&vy,sigs,sigs+1);
+		PT[i].setX(xx,yy);
+		PT[i].irev[0]=ir0;
+		PT[i].irev[1]=ir1;
+		PT[i].sigs[0]=sigs[0];
+		PT[i].sigs[1]=sigs[1];
+	}
+
 	fclose(fp);
 };
 
@@ -185,7 +227,6 @@ int main(int argc, char *argv[] ){
 
 	fgets(cbff,128,fp);
 	fscanf(fp,"%lf\n",&tt);
-
 	fgets(cbff,128,fp);
 	fgets(cbff,128,fp);
 	fgets(cbff,128,fp);
