@@ -45,13 +45,15 @@ class DEM_DATA{
 		Curve2D *crvs,*hgts;
 		void load_dem_inp(char fname[128]);
 		void load_sheet_data(char fname[128]);
-		void load_ptc_data(char fname[128]);
-		void spline_fit();
+		void load_ptc_data(char fname[128],bool init);
+		void spline_fit(bool init);
+		void paint(Dom2D dom);
 		int iprd[2];
+		double Xa[2],Xb[2],Wd[2];
+		double time;
 
 		int nst; 
 		int npt;
-		Dom2D dom;
 	private:
 };
 
@@ -91,28 +93,27 @@ void DEM_DATA::load_sheet_data(char fname[128]){
 	}
 	fclose(fp);
 };
-void DEM_DATA::load_ptc_data(char fname[128]){
+void DEM_DATA::load_ptc_data(char fname[128],bool init){
 	char cbff[128];
 	FILE *fp=fopen(fname,"r"); // "x***.dat"
 	if(fp==NULL) show_msg(fname); 
 
 	fgets(cbff,128,fp);
-	fscanf(fp,"%lf\n",&dom.time);
+	fscanf(fp,"%lf\n",&time);
 	fgets(cbff,128,fp);
 	fgets(cbff,128,fp);
 	fgets(cbff,128,fp);
-	fscanf(fp,"%lf %lf\n",dom.Xa,dom.Xa+1);
+	fscanf(fp,"%lf %lf\n",Xa,Xa+1);
 	fgets(cbff,128,fp);
 	double exy,eyx;
-	double Wd[2];
 	fscanf(fp,"%lf %lf %lf %lf\n",Wd,Wd+1,&exy,&eyx);
 	fgets(cbff,128,fp);
 	fscanf(fp,"%d\n",&npt);
-	dom.Xb[0]=dom.Xa[0]+Wd[0];
-	dom.Xb[1]=dom.Xa[1]+Wd[1];
+	Xb[0]=Xa[0]+Wd[0];
+	Xb[1]=Xa[1]+Wd[1];
 	//;dom.set_dx();
 
-	PT=(PRTCL *)malloc(sizeof(PRTCL)*npt);
+	if(init) PT=(PRTCL *)malloc(sizeof(PRTCL)*npt);
 
 	fgets(cbff,128,fp);
 	int i,ir0,ir1;
@@ -126,8 +127,53 @@ void DEM_DATA::load_ptc_data(char fname[128]){
 		PT[i].sigs[0]=sigs[0];
 		PT[i].sigs[1]=sigs[1];
 	}
-
 	fclose(fp);
+};
+void DEM_DATA::spline_fit(bool init){
+	if(init){
+		crvs=(Curve2D *)malloc(sizeof(Curve2D)*nst);
+		hgts=(Curve2D *)malloc(sizeof(Curve2D)*nst);
+	}
+	int i,j,k,ip1;
+	double x1[2];
+	for(i=0;i<nst;i++){
+		crvs[i].init(st[i].Np);
+		hgts[i].init(st[i].Np);
+	for(j=0;j<st[i].Np;j++){
+		ip1=st[i].list[j];
+		for(k=0;k<2;k++){
+			x1[k]=PT[ip1].x[k]+PT[ip1].irev[k]*Wd[k];
+		}
+		//printf("%lf %lf\n",x1[0],x1[1]);
+		crvs[i].x[j]=x1[0]; // parctcle x-cooridnate
+		crvs[i].y[j]=x1[1]; // particle y-coordinate
+		hgts[i].x[j]=PT[ip1].sigs[0]; // hydrated water thickness 
+		hgts[i].y[j]=PT[ip1].sigs[1]; // 
+	}
+		crvs[i].spline(); // generate spline curves
+		hgts[i].spline(); 
+	}
+};
+void DEM_DATA::paint(Dom2D dom){
+	int i,j;
+	double x1[2],x2[2];
+	dom.Xa[0]=Xa[0]; 
+	dom.Xa[1]=Xa[1];
+	dom.Xb[0]=Xb[0];
+	dom.Xb[1]=Xb[1];
+	dom.time=time;
+	dom.set_dx();
+
+	for(i=0;i<nst;i++){
+	for(j=0;j<st[i].Np-1;j++){
+		x1[0]=crvs[i].x[j];
+		x1[1]=crvs[i].y[j];
+		x2[0]=crvs[i].x[j+1];
+		x2[1]=crvs[i].y[j+1];	
+		dom.draw_line(x1,x2,2,1); // paint clay sheet (solid phase)
+	}
+	}	
+	puts("paint done !\n");
 };
 
 int main(int argc, char *argv[] ){
@@ -179,6 +225,7 @@ int main(int argc, char *argv[] ){
 	fclose(fp);
 
 //	----------DEM PARAMETERS--------------
+	/*
 	sig0=1.5;
 	fp=fopen(fndem,"r"); //	"dem.inp"
 	int nhead=28; // number of header lines (to be skipped)
@@ -188,11 +235,13 @@ int main(int argc, char *argv[] ){
 	}
 	fscanf(fp,"%d %d\n",iprd,iprd+1); // periodic B.C. 
 	fclose(fp);
+	*/
 
 	DEM_DATA DM;
 	DM.load_dem_inp(fndem);
 
 //	----------DEM SHEET DATA --------------
+	/*
 	fp=fopen(fnsht,"r");
 	if(fp==NULL) show_msg(fnsht); 
 	fgets(cbff,128,fp);
@@ -209,9 +258,11 @@ int main(int argc, char *argv[] ){
 		fgets(cbff,2,fp);
 	}
 	fclose(fp);
-
+	*/
 	DM.load_sheet_data(fnsht);
 	
+	Dom2D dom(Ndiv[0],Ndiv[1]);
+	Dom2D Th(Ndiv[0],Ndiv[1]);
 	for(int nf=nf1;nf<=nf2;nf+=nf_inc){
 		sprintf(fndat,"%s/x%d.dat",dir,nf);
 		sprintf(fnout,"%s%s%d.%s",dir_out,head,nf,tail);
@@ -219,8 +270,11 @@ int main(int argc, char *argv[] ){
 		printf("%s --> %s\n",fndat,fnout); // Input,Output data files
 
 //	-----------LOAD PARTICLE MOTION DATA -------------
+		DM.load_ptc_data(fndat,true);
+/*
 	fp=fopen(fndat,"r");
 	if(fp==NULL) show_msg(fndat); 
+	
 
 	fo=fopen(fnout,"w");
 	if(fo==NULL) show_msg(fnout);
@@ -251,7 +305,7 @@ int main(int argc, char *argv[] ){
 		PT[i].sigs[1]=sigs[1];
 	}
 
-	Dom2D dom(Ndiv[0],Ndiv[1]);
+	//Dom2D dom(Ndiv[0],Ndiv[1]);
 	dom.Xa[0]=Xa[0]; 
 	dom.Xa[1]=Xa[1];
 	dom.Xb[0]=Xa[0]+Wd[0];
@@ -259,7 +313,8 @@ int main(int argc, char *argv[] ){
 	dom.time=tt;
 	dom.set_dx();
 
-	Dom2D Th(Ndiv[0],Ndiv[1]);
+	
+
 	Th.Xa[0]=Xa[0]; 
 	Th.Xa[1]=Xa[1];
 	Th.Xb[0]=Xa[0]+Wd[0];
@@ -288,7 +343,9 @@ int main(int argc, char *argv[] ){
 			crvs[i].spline(); // generate spline curves
 			hgts[i].spline(); 
 		}
-
+*/
+	DM.spline_fit(true);
+/*
 	double ss,ds;
 	int Ns;
 	double dxds,dyds,sigp,sigm;
@@ -330,14 +387,6 @@ int main(int argc, char *argv[] ){
 			th_n=acos(nb.x[0])/pi*180.0;
 			if(nb.x[1]<0.0) th_n=360.0-th_n;
 			Th.xy2ij(xx,yy,indx);
-			/*
-			ix=int((xx-Xa[0])/Th.dx[0]);
-			iy=int((yy-Xa[1])/Th.dx[1]);
-			if(ix < 0) ix+=Ndiv[0];
-			if(iy < 0) iy+=Ndiv[1];
-			if(ix >=Ndiv[0]) ix-=Ndiv[0];
-			if(iy >=Ndiv[1]) iy-=Ndiv[1];
-			*/
 			Th.kcell[indx[0]][indx[1]]=(int(th_n)%180);
 		};
 	};
@@ -350,11 +399,13 @@ int main(int argc, char *argv[] ){
 		dom.draw_line(x1,x2,2,1); // paint clay sheet (solid phase)
 	}
 	}	
+*/
+	DM.paint(dom);
 	dom.out_kcell(fnout);
-	Th.out_kcell(fnout2);
+//	Th.out_kcell(fnout2);
 
-	free(crvs);
-	free(hgts);
+//	free(crvs);
+//	free(hgts);
 
 	}
 	return(0);
