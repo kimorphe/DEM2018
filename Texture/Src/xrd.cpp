@@ -4,7 +4,9 @@
 #include <math.h>
 #include "domain.h"
 #include "spline.h"
-
+#include "fft.h"
+#include <complex>
+using namespace std;
 /*
 void show_msg(char *fname){
 	printf("Can't find '%s'\n",fname);
@@ -47,7 +49,7 @@ class DEM_DATA{
 		void load_sheet_data(char fname[128]);
 		void load_ptc_data(char fname[128],bool init);
 		void spline_fit(bool init);
-		void paint(Dom2D dom);
+		void paint(Dom2D &dom);
 		int iprd[2];
 		double Xa[2],Xb[2],Wd[2];
 		double time;
@@ -154,7 +156,7 @@ void DEM_DATA::spline_fit(bool init){
 		hgts[i].spline(); 
 	}
 };
-void DEM_DATA::paint(Dom2D dom){
+void DEM_DATA::paint(Dom2D &dom){
 	int i,j;
 	double x1[2],x2[2];
 	dom.Xa[0]=Xa[0]; 
@@ -163,6 +165,8 @@ void DEM_DATA::paint(Dom2D dom){
 	dom.Xb[1]=Xb[1];
 	dom.time=time;
 	dom.set_dx();
+
+	dom.show_size();
 
 	for(i=0;i<nst;i++){
 	for(j=0;j<st[i].Np-1;j++){
@@ -185,19 +189,9 @@ int main(int argc, char *argv[] ){
 	char fndem[128]; // "folder/dem.inp" (DEM main input)
 	char fnsht[128]; // "folder/sheet.dat" (Clay sheet data)
 	char fndat[128]; // "folder/x***.dat" (particle data file)
-	FILE *fp,*fo;
-
-	int npt,nst,ir0,ir1,ip1,ip2;
-	int nsum; 
-	int i,j,k,l,N;
-	int Ndiv[2],irev[2],iprd[2];
-		//,nsig;
-
-	double xx,yy,sig0,sig,tt;
-	double x1[2],x2[2],Wd[2],Xa[2],Xb[2],Xc[2];
+	FILE *fp;
+	int Ndiv[2];
 	char cbff[128],dir[128],dir_out[128],head[128],tail[128];
-	SHEET *st;
-	PRTCL *PT;
 
 //   ----------INPUT DATA (control data)-----------
 	strcpy(fname,"xrd.inp");
@@ -224,127 +218,27 @@ int main(int argc, char *argv[] ){
 	fscanf(fp,"%d %d\n",Ndiv,Ndiv+1); // Number of pixels
 	fclose(fp);
 
-//	----------DEM PARAMETERS--------------
-	/*
-	sig0=1.5;
-	fp=fopen(fndem,"r"); //	"dem.inp"
-	int nhead=28; // number of header lines (to be skipped)
-	if(fp==NULL) show_msg(fndem); 
-	for(i=0;i<nhead;i++){
-		fgets(cbff,128,fp);
-	}
-	fscanf(fp,"%d %d\n",iprd,iprd+1); // periodic B.C. 
-	fclose(fp);
-	*/
 
 	DEM_DATA DM;
-	DM.load_dem_inp(fndem);
-
-//	----------DEM SHEET DATA --------------
-	/*
-	fp=fopen(fnsht,"r");
-	if(fp==NULL) show_msg(fnsht); 
-	fgets(cbff,128,fp);
-	fscanf(fp,"%d\n",&nst);
-		st=(SHEET *)malloc(nst*sizeof(SHEET));
-	nsum=0;
-	for(i=0;i<nst;i++){
-		fgets(cbff,128,fp);
-		fscanf(fp,"%d\n",&N);
-		nsum+=(N-1);
-		st[i].init(N);
-		for(j=0;j<N;j++) fscanf(fp,"%d",st[i].list+j);
-		for(j=0;j<N;j++) st[i].list[j]--;
-		fgets(cbff,2,fp);
-	}
-	fclose(fp);
-	*/
-	DM.load_sheet_data(fnsht);
+	DM.load_dem_inp(fndem);	// load DEM parameters
+	DM.load_sheet_data(fnsht); //load DEM sheet data 
 	
 	Dom2D dom(Ndiv[0],Ndiv[1]);
 	Dom2D Th(Ndiv[0],Ndiv[1]);
+	int init=true;
 	for(int nf=nf1;nf<=nf2;nf+=nf_inc){
 		sprintf(fndat,"%s/x%d.dat",dir,nf);
 		sprintf(fnout,"%s%s%d.%s",dir_out,head,nf,tail);
 		sprintf(fnout2,"%s%sn%d.%s",dir_out,head,nf,tail);
 		printf("%s --> %s\n",fndat,fnout); // Input,Output data files
+		DM.load_ptc_data(fndat,init);	// load particle snapshot data
+		DM.spline_fit(init);	// generate spline curves
+		init=false;
 
-//	-----------LOAD PARTICLE MOTION DATA -------------
-		DM.load_ptc_data(fndat,true);
-/*
-	fp=fopen(fndat,"r");
-	if(fp==NULL) show_msg(fndat); 
-	
-
-	fo=fopen(fnout,"w");
-	if(fo==NULL) show_msg(fnout);
-
-	fgets(cbff,128,fp);
-	fscanf(fp,"%lf\n",&tt);
-	fgets(cbff,128,fp);
-	fgets(cbff,128,fp);
-	fgets(cbff,128,fp);
-	fscanf(fp,"%lf %lf\n",Xa,Xa+1);
-	fgets(cbff,128,fp);
-	double exy,eyx;
-	fscanf(fp,"%lf %lf %lf %lf\n",Wd,Wd+1,&exy,&eyx);
-	fgets(cbff,128,fp);
-	fscanf(fp,"%d\n",&npt);
-
-	PT=(PRTCL *)malloc(sizeof(PRTCL)*npt);
-
-	fgets(cbff,128,fp);
-	double vx,vy;
-	double sigs[2];
-	for(i=0;i<npt;i++){
-		fscanf(fp,"%d %d %le %le %le %le %le %le\n",&ir0,&ir1,&xx,&yy,&vx,&vy,sigs,sigs+1);
-		PT[i].setX(xx,yy);
-		PT[i].irev[0]=ir0;
-		PT[i].irev[1]=ir1;
-		PT[i].sigs[0]=sigs[0];
-		PT[i].sigs[1]=sigs[1];
-	}
-
-	//Dom2D dom(Ndiv[0],Ndiv[1]);
-	dom.Xa[0]=Xa[0]; 
-	dom.Xa[1]=Xa[1];
-	dom.Xb[0]=Xa[0]+Wd[0];
-	dom.Xb[1]=Xa[1]+Wd[1];
-	dom.time=tt;
-	dom.set_dx();
-
-	
-
-	Th.Xa[0]=Xa[0]; 
-	Th.Xa[1]=Xa[1];
-	Th.Xb[0]=Xa[0]+Wd[0];
-	Th.Xb[1]=Xa[1]+Wd[1];
-	Th.time=tt;
-	Th.set_dx();
-	Th.set_val(-90);
-
-	Curve2D *crvs,*hgts;
-	crvs=(Curve2D *)malloc(sizeof(Curve2D)*nst);
-	hgts=(Curve2D *)malloc(sizeof(Curve2D)*nst);
-		for(i=0;i<nst;i++){
-			crvs[i].init(st[i].Np);
-			hgts[i].init(st[i].Np);
-		for(j=0;j<st[i].Np;j++){
-			ip1=st[i].list[j];
-			for(k=0;k<2;k++){
-				x1[k]=PT[ip1].x[k]+PT[ip1].irev[k]*Wd[k];
-			}
-			//printf("%lf %lf\n",x1[0],x1[1]);
-			crvs[i].x[j]=x1[0]; // parctcle x-cooridnate
-			crvs[i].y[j]=x1[1]; // particle y-coordinate
-			hgts[i].x[j]=PT[ip1].sigs[0]; // hydrated water thickness 
-			hgts[i].y[j]=PT[ip1].sigs[1]; // 
-		}
-			crvs[i].spline(); // generate spline curves
-			hgts[i].spline(); 
-		}
-*/
-	DM.spline_fit(true);
+		DM.paint(dom);	// convert to image data
+		//dom.show_size();
+		dom.out_kcell(fnout);
+		dom.clear_kcell();
 /*
 	double ss,ds;
 	int Ns;
@@ -400,12 +294,7 @@ int main(int argc, char *argv[] ){
 	}
 	}	
 */
-	DM.paint(dom);
-	dom.out_kcell(fnout);
 //	Th.out_kcell(fnout2);
-
-//	free(crvs);
-//	free(hgts);
 
 	}
 	return(0);

@@ -1,3 +1,4 @@
+#include <complex>
 void mem_alloc2D(int nx, int ny, double ***pt);
 void show_msg(char *fname);
 
@@ -57,6 +58,8 @@ class Dom2D{
 		int draw_line(double x1[2], double x2[2],int iphs, int lw);
 		void set_val(int val);
 		void xy2ij(double x, double y, int indx[2]);
+		void show_size();
+		void clear_kcell();
 	private:
 		void mem_alloc();
 };

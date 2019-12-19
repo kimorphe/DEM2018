@@ -61,6 +61,22 @@ void Dom2D :: out_kcell(char *fname){
 	}
 	fclose(fp);
 };
+void Dom2D::show_size(){
+	puts("-------DOMAIN SIZE ----------");
+	printf("Xa=%lf %lf\n",Xa[0],Xa[1]);
+	printf("Xb=%lf %lf\n",Xb[0],Xb[1]);
+	printf("Ndiv=%d %d\n",Ndiv[0],Ndiv[1]);
+	printf("dx=%lf %lf\n",dx[0],dx[1]);
+	puts("-----------------------------");
+};
+void Dom2D::clear_kcell(){
+	int i,j;
+	for(i=0;i<Ndiv[0];i++){
+	for(j=0;j<Ndiv[1];j++){
+		kcell[i][j]=0;
+	}
+	}
+};
 Dom2D::Dom2D(int Nx,int Ny){
 	Ndiv[0]=Nx; 
 	Ndiv[1]=Ny; 
