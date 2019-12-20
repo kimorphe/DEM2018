@@ -51,7 +51,7 @@ class KCELL:
     def showK(self,ax,tlt=""):
         Ka=self.Ka;
         Kb=self.Kb;
-        im=ax.imshow(np.abs(self.K),origin="lower",extent=[Ka[0],Kb[0],Ka[1],Kb[1]],interpolation="none",cmap="gray");
+        im=ax.imshow(np.abs(self.K),origin="lower",extent=[Ka[0],Kb[0],Ka[1],Kb[1]],interpolation="none",cmap="jet",vmin=0,vmax=0.005);
 
     def export(self,fig,fname):
         fig.savefig(fname,bbox_inches="tight")
@@ -63,7 +63,8 @@ class KCELL:
         #self.K[indx]=0
 
     def FFT2D(self):
-        K=np.fft.fft2(self.K)
+        Ndat=self.Ndiv[0]*self.Ndiv[1];
+        K=np.fft.fft2(self.K)/Ndat
         K=np.fft.fftshift(K)
         #self.K=np.abs(K)
         self.K=K

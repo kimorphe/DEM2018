@@ -10,5 +10,7 @@
 # output file (prefix, extention)
 k
 dat
+# (px,py) Ndiv[0:1]=2^(px,py): pixel counts
+ 9 9
 # Ndiv[0:1]: pixel counts
  500 500

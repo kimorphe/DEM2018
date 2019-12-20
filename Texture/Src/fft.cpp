@@ -206,6 +206,8 @@ void DFT_prms::set_time(double t1, double t2, int n){
 
 	df=1./Td;
 	dw=2.*PI*df;
+	fmax=df*n;
+	wmax=dw*n;
 	
 };
 void DFT_prms::set_time(double dtau, int n){

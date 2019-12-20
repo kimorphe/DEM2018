@@ -11,6 +11,7 @@ class DFT_prms{
 		double df;
 		double ts,te;
 		double Td;
+		double fmax,wmax;
 		void set_time(double t1, double t2, int n);
 		void set_time(double dtau, int n);
 		double t(int i); // return time_i

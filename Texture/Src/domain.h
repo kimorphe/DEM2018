@@ -1,4 +1,5 @@
 #include <complex>
+#include "fft.h"
 using namespace std;
 void mem_alloc2D(int nx, int ny, double ***pt);
 void show_msg(char *fname);
@@ -62,7 +63,11 @@ class Dom2D{
 		void show_size();
 		void clear_kcell();
 		complex<double> **Kdat;
+		DFT_prms dftx;
+		DFT_prms dfty;
 		void FFT2D();
+		void out_Kdat(char *fname);
+		void XRD(char *fnout);
 	private:
 		void mem_alloc();
 		void mem_calloc();

@@ -4,7 +4,7 @@
 #include <math.h>
 #include "domain.h"
 #include "spline.h"
-#include "fft.h"
+//#include "fft.h"
 #include <complex>
 using namespace std;
 /*
@@ -86,7 +86,6 @@ void DEM_DATA::load_sheet_data(char fname[128]){
 	for(i=0;i<nst;i++){
 		fgets(cbff,128,fp);
 		fscanf(fp,"%d\n",&N);
-		printf("N=%d\n",N);
 		nsum+=(N-1);
 		st[i].init(N);
 		for(j=0;j<N;j++) fscanf(fp,"%d",st[i].list+j);
@@ -177,7 +176,6 @@ void DEM_DATA::paint(Dom2D &dom){
 		dom.draw_line(x1,x2,2,1); // paint clay sheet (solid phase)
 	}
 	}	
-	puts("paint done !\n");
 };
 
 int main(int argc, char *argv[] ){
@@ -215,7 +213,12 @@ int main(int argc, char *argv[] ){
 	fscanf(fp,"%s\n",tail); // data file name extension
 
 	fgets(cbff,128,fp);
-	fscanf(fp,"%d %d\n",Ndiv,Ndiv+1); // Number of pixels
+	int px,py;
+	fscanf(fp,"%d %d\n",&px,&py); // Number of pixels
+	Ndiv[0]=pow(2,px);
+	Ndiv[1]=pow(2,py);
+	printf("Ndiv=%d %d\n",Ndiv[0],Ndiv[1]);
+	//fscanf(fp,"%d %d\n",Ndiv,Ndiv+1); // Number of pixels
 	fclose(fp);
 
 
@@ -226,6 +229,7 @@ int main(int argc, char *argv[] ){
 	Dom2D dom(Ndiv[0],Ndiv[1]);
 	Dom2D Th(Ndiv[0],Ndiv[1]);
 	int init=true;
+	char fnout3[128];
 	for(int nf=nf1;nf<=nf2;nf+=nf_inc){
 		sprintf(fndat,"%s/x%d.dat",dir,nf);
 		sprintf(fnout,"%s%s%d.%s",dir_out,head,nf,tail);
@@ -238,7 +242,15 @@ int main(int argc, char *argv[] ){
 		DM.paint(dom);	// convert to image data
 		//dom.show_size();
 		dom.out_kcell(fnout);
+
+		dom.FFT2D();
+		dom.out_Kdat(fnout2);
+		sprintf(fnout3,"%sxrd%d.%s",dir_out,nf,tail);
+		dom.XRD(fnout3);
 		dom.clear_kcell();
+	}
+	return(0);
+}
 /*
 	double ss,ds;
 	int Ns;
@@ -296,9 +308,6 @@ int main(int argc, char *argv[] ){
 */
 //	Th.out_kcell(fnout2);
 
-	}
-	return(0);
-}
 
 void SHEET:: init(int N){
 

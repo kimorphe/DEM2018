@@ -5,7 +5,7 @@
 #include<stdlib.h>
 #include "domain.h"
 #include "mscs.h"
-#include "fft.h"
+//#include "fft.h"
 #include <complex>
 using namespace std;
 
@@ -63,6 +63,38 @@ void Dom2D :: out_kcell(char *fname){
 	}
 	fclose(fp);
 };
+void Dom2D ::out_Kdat(char *fname){
+
+	FILE *fp=fopen(fname,"w");
+	int i,j;
+	double reK,imK;
+
+
+	fprintf(fp,"# time (ps) in DEM simulation\n");
+	fprintf(fp,"%lf\n",time);
+
+	double Ka[2],Kb[2];
+	Ka[0]=-dftx.fmax*0.5;
+	Ka[1]=-dfty.fmax*0.5;
+	Kb[0]=dftx.fmax*0.5;
+	Kb[1]=dfty.fmax*0.5;
+	fprintf(fp,"# Ka[0], Ka[1]\n");
+	fprintf(fp," %lf %lf\n",Ka[0],Ka[1]);
+	fprintf(fp,"# Kb[0], Kb[1]\n");
+	fprintf(fp," %lf %lf\n",Kb[0],Kb[1]);
+	fprintf(fp,"# Ndiv[0], Ndiv[1]\n");
+	fprintf(fp,"%d %d\n",Ndiv[0],Ndiv[1]);
+	fprintf(fp,"# Kdat[i][j]\n");
+	fprintf(fp,"Real,Imag\n");
+	for(i=0;i<Ndiv[0];i++){
+	for(j=0;j<Ndiv[1];j++){
+		reK=Kdat[i][j].real();
+		imK=Kdat[i][j].imag();
+		fprintf(fp, "%lf, %lf\n",reK,imK);
+	}
+	}
+	fclose(fp);
+};
 void Dom2D::show_size(){
 	puts("-------DOMAIN SIZE ----------");
 	printf("Xa=%lf %lf\n",Xa[0],Xa[1]);
@@ -83,6 +115,7 @@ Dom2D::Dom2D(int Nx,int Ny){
 	Ndiv[0]=Nx; 
 	Ndiv[1]=Ny; 
 	mem_alloc();
+	mem_calloc();
 }
 void Dom2D::set_dx(){
 	int i,ndim=2;
@@ -150,6 +183,7 @@ Dom2D::Dom2D(char *fname){ //Contructor 2
 	fclose(fp);
 
 	mem_alloc();
+	mem_calloc();
 };
 void Dom2D::mem_alloc(){
 	int i,j,*ptmp;
@@ -190,7 +224,76 @@ void Dom2D::FFT2D(){
 	}
 	free(Amp);
 	for(i=0;i<Ndiv[0];i++)	fft(Kdat[i],Ndiv[1],1);
-	DFT_prms prm;
+	dftx.set_time(Xa[0],Xb[0],Ndiv[0]);
+	dfty.set_time(Xa[1],Xb[1],Ndiv[1]);
+	printf("kmax=%lf %lf\n",dftx.fmax,dfty.fmax);
+
+	// FFT Shift 
+	// (quadrand wave-number domains are swapped according to Nyquist criteria)
+	complex<double> ztmp;
+	int Nx2=Ndiv[0]/2;
+	int Ny2=Ndiv[1]/2;
+	for(i=0;i<Nx2;i++){
+	for(j=0;j<Ny2;j++){
+		ztmp=Kdat[i+Nx2][j+Ny2];
+		Kdat[i+Nx2][j+Ny2]=Kdat[i][j];
+		Kdat[i][j]=ztmp;
+
+		ztmp=Kdat[i+Nx2][j];
+		Kdat[i+Nx2][j]=Kdat[i][j+Ny2];
+		Kdat[i][j+Ny2]=ztmp;
+	}
+	}
+};
+void Dom2D::XRD(char *fnout){
+	int Nth=120;	// measurement angles  (--> 2th)
+	int Nin=360;	// incident angles
+
+	double pi=4.0*atan(1.0);
+	double lmb=1.5418e-01; // CuKa [nm]
+	//double lmb=0.7106e-01; // Mo [nm]
+	double Wd[2],sint[2],thi[2];
+	int i,j;
+	for(i=0;i<2;i++){
+		Wd[i]=Xb[i]-Xa[i];
+		sint[i]=lmb*Ndiv[i]/(4.0*Wd[i]);
+		if(sint[i]>1.0) sint[i]=1.0;
+		thi[i]=asin(sint[i]);
+	};
+	double th_max=thi[0];
+	if(th_max > thi[1]) th_max=thi[1];
+	printf("th_max[deg]=%lf\n",th_max/pi*180.0);
+	double dth=th_max/(Nth-1);
+
+	complex<double> *Ith=(complex<double> *)malloc(sizeof(complex<double>)*Nth);
+	for(i=0;i<Nth;i++) Ith[i]=complex<double>(0.0,0.0);
+
+	double dth_in=pi/Nin;
+
+	double Ka[2];
+	Ka[0]=-dftx.fmax*0.5;
+	Ka[1]=-dfty.fmax*0.5;
+	double xin[2],xsc[2],kv[2];
+	int ix,iy;
+	double th,th_in,dphi;
+	for(i=0;i<Nin;i++){
+		th_in=dth_in*i;
+		xin[0]=cos(th_in);
+		xin[1]=sin(th_in);
+	for(j=0;j<Nth;j++){
+		th=dth*j;
+		xsc[0]=cos(th_in+2.*th);
+		xsc[1]=sin(th_in+2.*th);
+		kv[0]=(xsc[0]-xin[0])/lmb;
+		kv[1]=(xsc[1]-xin[1])/lmb;
+		ix=int((kv[0]-Ka[0])/dftx.df);
+		iy=int((kv[1]-Ka[1])/dfty.df);
+		Ith[j]+=abs(Kdat[ix][iy]);
+	}
+	}
+	FILE *fp=fopen(fnout,"w");
+	for(i=0;i<Nth;i++) fprintf(fp,"%lf %lf\n",2.*dth*i/pi*180.,abs(Ith[i]));
+	fclose(fp);
 };
 
 int Dom2D::perfo(char *fname){
