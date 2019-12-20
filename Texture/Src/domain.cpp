@@ -5,6 +5,8 @@
 #include<stdlib.h>
 #include "domain.h"
 #include "mscs.h"
+#include "fft.h"
+#include <complex>
 using namespace std;
 
 void show_msg(char *fname){
@@ -162,6 +164,33 @@ void Dom2D::mem_alloc(){
 	for(j=0;j<Ndiv[1];j++){
 		kcell[i][j]=0;
 	}}
+};
+
+void Dom2D::mem_calloc(){
+	int i;
+	complex<double> *ptmp;
+	ptmp=(complex<double> *)malloc(sizeof(complex<double>)*Ndiv[0]*Ndiv[1]);
+	Kdat=(complex<double> **)malloc(sizeof(complex<double>*)*Ndiv[0]);
+	for(i=0;i<Ndiv[0]*Ndiv[1];i++){
+		ptmp[i]=complex<double>(0.0,0.0);
+	}
+	for(i=0;i<Ndiv[0];i++){
+		Kdat[i]=ptmp+i*Ndiv[1];
+	};
+};
+
+void Dom2D::FFT2D(){
+	complex<double>* Amp;
+	Amp=(complex<double>*)malloc(sizeof(complex<double>)*Ndiv[0]);
+	int i,j;
+	for(j=0;j<Ndiv[1];j++){
+		for(i=0;i<Ndiv[0];i++) Amp[i]=complex<double>(kcell[i][j],0.0);
+		fft(Amp,Ndiv[0],1);
+		for(i=0;i<Ndiv[0];i++) Kdat[i][j]=Amp[i];
+	}
+	free(Amp);
+	for(i=0;i<Ndiv[0];i++)	fft(Kdat[i],Ndiv[1],1);
+	DFT_prms prm;
 };
 
 int Dom2D::perfo(char *fname){

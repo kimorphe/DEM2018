@@ -1,4 +1,5 @@
 #include <complex>
+using namespace std;
 void mem_alloc2D(int nx, int ny, double ***pt);
 void show_msg(char *fname);
 
@@ -60,8 +61,11 @@ class Dom2D{
 		void xy2ij(double x, double y, int indx[2]);
 		void show_size();
 		void clear_kcell();
+		complex<double> **Kdat;
+		void FFT2D();
 	private:
 		void mem_alloc();
+		void mem_calloc();
 };
 
 double dist2d(double *x1, double *x2);
