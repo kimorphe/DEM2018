@@ -6,11 +6,13 @@
 # Output data folder
 ../
 # Particle motion data files x***.dat (file numbers: n1,n2,n_inc)
- 240 250 10
+ 210 250 10
 # output file (prefix, extention)
 k
 dat
 # (px,py) Ndiv[0:1]=2^(px,py): pixel counts
  9 9
+
+
 # Ndiv[0:1]: pixel counts
  500 500

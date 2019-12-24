@@ -37,6 +37,7 @@ class PRTCL{
 		void init();	// initialize class instance
 		void setX(double x1, double x2); // set position vector
 		double sigs[2];
+		double n[2];	// normal vector;
 	private:
  };
 
@@ -154,6 +155,23 @@ void DEM_DATA::spline_fit(bool init){
 		crvs[i].spline(); // generate spline curves
 		hgts[i].spline(); 
 	}
+
+
+	double dxds,dyds,ss,tt;
+	Vec2 tb;
+	for(i=0;i<nst;i++){
+	for(j=0;j<st[i].Np;j++){
+		ip1=st[i].list[j];
+		ss=j;
+		dxds=crvs[i].dxds(ss);
+		dyds=crvs[i].dyds(ss);
+		tb.set(dxds,dyds);	// tangential vector
+		tt=tb.len();
+		tb.div(tt);	// unit tangential vector
+		PT[ip1].n[0]=-tb.x[1];
+		PT[ip1].n[1]= tb.x[0];
+	}
+	}
 };
 void DEM_DATA::paint(Dom2D &dom){
 	int i,j;
@@ -206,7 +224,7 @@ double xrd_sum(PRTCL *PT, int npt){
 		printf("%lf %lf\n",2.*th/pi*180.0,abs(Ith)/npt);
 	}
 };
-double two_body_cor(PRTCL *PT, int npt,double *Wd){
+double two_body_cor(PRTCL *PT, int npt, double *Wd, char *fname, bool iso){
 	double pi=4.0*atan(1.0);
 	int i,j,I,J;
 	double rmax=Wd[0];
@@ -215,17 +233,22 @@ double two_body_cor(PRTCL *PT, int npt,double *Wd){
 	double r0=dr;	// radius of exclusion volume
 
 	int Nr=int(rmax/dr);
-	int *hist;
-
-	hist=(int *)malloc(sizeof(int)*Nr);
-	for(i=0;i<Nr;i++) hist[i]=0;
+	rmax=dr*Nr;
+	double *hist;
+	hist=(double *)malloc(sizeof(double)*Nr);
+	for(i=0;i<Nr;i++) hist[i]=0.0;
 
 	double x1[2],x2[2],xx,yy,rij;
+	double n1[2],n2[2],beta;
 
 	for(i=0; i<npt; i++){
 		x1[0]=PT[i].x[0];
 		x1[1]=PT[i].x[1];
+		n1[0]=PT[i].n[0];
+		n1[1]=PT[i].n[1];
 	for(j=0; j<npt; j++){
+		n2[0]=PT[j].n[0];
+		n2[1]=PT[j].n[1];
 		for(I=-1;I<=1;I++){
 			x2[0]=PT[j].x[0]+I*Wd[0];
 		for(J=-1;J<=1;J++){
@@ -233,17 +256,26 @@ double two_body_cor(PRTCL *PT, int npt,double *Wd){
 			xx=x2[0]-x1[0];
 			yy=x2[1]-x1[1];
 			rij=sqrt(xx*xx+yy*yy);
-			if(rij>rmax) continue;
+			if(rij>=rmax) continue;
 			if(rij < r0) continue;
-			hist[int(rij/dr)]++;
+			xx/=rij;
+			yy/=rij;
+			beta=(n1[0]*xx+n1[1]*yy)*(n2[0]*xx+n2[1]*yy);
+			if(iso) beta=1.;	// particle alignment not considerd
+			hist[int(rij/dr)]+=(beta*beta);
 		}
 		}
 	}
 	}
 
-	for(i=0;i<Nr;i++) printf("%lf %lf\n",dr*(i+0.5),hist[i]/(2.*pi*dr*(i+0.5)));
-	printf("\n");
+	FILE *fp=fopen(fname,"w");
+	double ri;
 
+	for(i=0;i<Nr;i++){
+		ri=dr*(i+0.5);
+	       	fprintf(fp,"%lf %lf\n",ri,hist[i]/(2.*pi*ri));
+	};
+	fclose(fp);
 
 };
 
@@ -251,12 +283,15 @@ int main(int argc, char *argv[] ){
 
 	double pi=atan(1.0)*4.0;
 	char fname[128];
-	char fnout[128]; // output file 
-	char fnout2[128]; // output file 
+	char fnout1[128]; // output file (pixel image data)
+	char fnout2[128]; // output file (2D FFT) 
+	char fnout3[128]; // output file (XRD pattern)
+	char fnout4[128]; // output file (Radial distribution function)
 	char fndem[128]; // "folder/dem.inp" (DEM main input)
 	char fnsht[128]; // "folder/sheet.dat" (Clay sheet data)
 	char fndat[128]; // "folder/x***.dat" (particle data file)
 	FILE *fp;
+	double Wd[2];
 	int Ndiv[2];
 	char cbff[128],dir[128],dir_out[128],head[128],tail[128];
 
@@ -287,41 +322,39 @@ int main(int argc, char *argv[] ){
 	Ndiv[0]=pow(2,px);
 	Ndiv[1]=pow(2,py);
 	printf("Ndiv=%d %d\n",Ndiv[0],Ndiv[1]);
-	//fscanf(fp,"%d %d\n",Ndiv,Ndiv+1); // Number of pixels
 	fclose(fp);
 
-
-	DEM_DATA DM;
+//		-------- MAIN ROUTINE --------
+	DEM_DATA DM;		// DEM data class
 	DM.load_dem_inp(fndem);	// load DEM parameters
 	DM.load_sheet_data(fnsht); //load DEM sheet data 
-	
-	Dom2D dom(Ndiv[0],Ndiv[1]);
-	Dom2D Th(Ndiv[0],Ndiv[1]);
-	int init=true;
-	char fnout3[128];
-	double Wd[2];
+	Dom2D dom(Ndiv[0],Ndiv[1]); // domain class to manipulate image data
+	bool init=true,iso=false;
 	for(int nf=nf1;nf<=nf2;nf+=nf_inc){
-		sprintf(fndat,"%s/x%d.dat",dir,nf);
-		sprintf(fnout,"%s%s%d.%s",dir_out,head,nf,tail);
-		sprintf(fnout2,"%s%sn%d.%s",dir_out,head,nf,tail);
-		printf("%s --> %s\n",fndat,fnout); // Input,Output data files
+		//	FILE NAMES
+		sprintf(fndat,"%s/x%d.dat",dir,nf);	// particle data file
+		sprintf(fnout1,"%s%s%d.%s",dir_out,head,nf,tail); // image data file
+		sprintf(fnout2,"%s%s%d.%s",dir_out,head,nf,"fft"); // FFT wave number spectrum 
+		sprintf(fnout3,"%s%s%d.%s",dir_out,head,nf,"xrd"); // XRD Intensity plot 
+		sprintf(fnout4, "%sx%d.%s",dir_out,nf,"rad"); // XRD Intensity plot 
+		printf("%s --> %s\n",fndat,fnout1); // Input,Output data files
+
 		DM.load_ptc_data(fndat,init);	// load particle snapshot data
-		DM.spline_fit(init);	// generate spline curves
+		DM.spline_fit(init);		// generate spline curves
 		init=false;
 
-		DM.paint(dom);	// convert to image data
-		//dom.show_size();
-		dom.out_kcell(fnout);
+		DM.paint(dom);	// convert particle to image data
+		dom.FFT2D();	// Perform 2D FFT
+		dom.out_kcell(fnout1); // write image to file
+		dom.out_Kdat(fnout2); // write FFT data to file
+		dom.XRD(fnout3);// synthesize XRD pattern by sampling FFT wave number spectrum 
 
-		dom.FFT2D();
-		dom.out_Kdat(fnout2);
-		sprintf(fnout3,"%sxrd%d.%s",dir_out,nf,tail);
-		dom.XRD(fnout3);
-		dom.clear_kcell();
 		//xrd_sum(DM.PT,DM.npt);
-		Wd[0]=dom.Xb[0]-dom.Xa[0];
-		Wd[1]=dom.Xb[1]-dom.Xa[1];
-		two_body_cor(DM.PT,DM.npt,Wd);
+		//Wd[0]=dom.Xb[0]-dom.Xa[0];
+		//Wd[1]=dom.Xb[1]-dom.Xa[1];
+		two_body_cor(DM.PT,DM.npt,DM.Wd,fnout4,iso); // radial distribution functioin
+
+		dom.clear_kcell();	// clear image data
 	}
 	return(0);
 }

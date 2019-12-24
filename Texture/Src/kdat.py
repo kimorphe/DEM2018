@@ -22,7 +22,6 @@ class Kdat:
         fp.close();
 
         self.dat=pd.read_csv(fname,skiprows=9);
-        print(self.dat.columns)
         Kr=np.array(self.dat['Real'])
         Ki=np.array(self.dat['Imag'])
         Z=Kr+1j*Ki;
@@ -36,18 +35,24 @@ class Kdat:
         Kb=self.Kb;
         im=ax.imshow(np.abs(self.Z),origin="lower",extent=[Ka[0],Kb[0],Ka[1],Kb[1]],interpolation="bilinear",cmap="jet",vmin=0,vmax=0.005);
         #im=ax.imshow(np.abs(self.Z),origin="lower",extent=[Ka[0],Kb[0],Ka[1],Kb[1]],interpolation="bilinear",cmap="jet")
-        plt.colorbar(im)
+        #plt.colorbar(im)
 
 
 
 if __name__=="__main__":
 
-    fname="kn240.dat"
 
     Dat=Kdat();
-    Dat.load(fname);
     fig=plt.figure()
     ax=fig.add_subplot(111)
 
-    Dat.show(ax)
-    plt.show()
+    fname="k210.fft"
+    nums=range(210,251,10)
+    for k in nums:
+        fname="k"+str(k)+".fft"
+        Dat.load(fname);
+        Dat.show(ax)
+        fname_out="fft"+str(k)+".png"
+        fig.savefig(fname_out,bbox_inches="tight")
+
+    #plt.show()
