@@ -178,6 +178,75 @@ void DEM_DATA::paint(Dom2D &dom){
 	}	
 };
 
+double xrd_sum(PRTCL *PT, int npt){
+	double pi=4.0*atan(1.0);
+	int i,j,k,Nth=361;
+	double kv[2];
+	double lmb=1.5418e-01; // CuKa [nm]
+	double kin=2.*pi/lmb;
+	double th,dth=0.125*pi/(Nth-1);
+	complex<double> zi=complex<double>(0.0,1.0);
+	complex<double> Ith,dIth;
+	int Nin=181;
+	double phi,dphi=pi/(Nin-1);
+
+	for(j=0;j<Nth;j++){
+		th=dth*j;
+		Ith=complex<double>(0.0,0.0);
+	for(k=0;k<Nin;k++){
+		phi=dphi*k;
+		kv[0]=2.*kin*sin(th)*cos(0.5*pi+th+phi);
+		kv[1]=2.*kin*sin(th)*sin(0.5*pi+th+phi);
+		dIth=complex<double>(0.0,0.0);
+		for(i=0;i<npt;i++){
+			dIth+=exp(zi*(kv[0]*PT[i].x[0]+kv[1]*PT[i].x[1]));
+		}
+		Ith+=abs(dIth);
+	}
+		printf("%lf %lf\n",2.*th/pi*180.0,abs(Ith)/npt);
+	}
+};
+double two_body_cor(PRTCL *PT, int npt,double *Wd){
+	double pi=4.0*atan(1.0);
+	int i,j,I,J;
+	double rmax=Wd[0];
+	if(rmax > Wd[1]) rmax=Wd[1];
+	double dr=0.1;
+	double r0=dr;	// radius of exclusion volume
+
+	int Nr=int(rmax/dr);
+	int *hist;
+
+	hist=(int *)malloc(sizeof(int)*Nr);
+	for(i=0;i<Nr;i++) hist[i]=0;
+
+	double x1[2],x2[2],xx,yy,rij;
+
+	for(i=0; i<npt; i++){
+		x1[0]=PT[i].x[0];
+		x1[1]=PT[i].x[1];
+	for(j=0; j<npt; j++){
+		for(I=-1;I<=1;I++){
+			x2[0]=PT[j].x[0]+I*Wd[0];
+		for(J=-1;J<=1;J++){
+			x2[1]=PT[j].x[1]+J*Wd[1];
+			xx=x2[0]-x1[0];
+			yy=x2[1]-x1[1];
+			rij=sqrt(xx*xx+yy*yy);
+			if(rij>rmax) continue;
+			if(rij < r0) continue;
+			hist[int(rij/dr)]++;
+		}
+		}
+	}
+	}
+
+	for(i=0;i<Nr;i++) printf("%lf %lf\n",dr*(i+0.5),hist[i]/(2.*pi*dr*(i+0.5)));
+	printf("\n");
+
+
+};
+
 int main(int argc, char *argv[] ){
 
 	double pi=atan(1.0)*4.0;
@@ -230,6 +299,7 @@ int main(int argc, char *argv[] ){
 	Dom2D Th(Ndiv[0],Ndiv[1]);
 	int init=true;
 	char fnout3[128];
+	double Wd[2];
 	for(int nf=nf1;nf<=nf2;nf+=nf_inc){
 		sprintf(fndat,"%s/x%d.dat",dir,nf);
 		sprintf(fnout,"%s%s%d.%s",dir_out,head,nf,tail);
@@ -248,6 +318,10 @@ int main(int argc, char *argv[] ){
 		sprintf(fnout3,"%sxrd%d.%s",dir_out,nf,tail);
 		dom.XRD(fnout3);
 		dom.clear_kcell();
+		//xrd_sum(DM.PT,DM.npt);
+		Wd[0]=dom.Xb[0]-dom.Xa[0];
+		Wd[1]=dom.Xb[1]-dom.Xa[1];
+		two_body_cor(DM.PT,DM.npt,Wd);
 	}
 	return(0);
 }
@@ -307,7 +381,6 @@ int main(int argc, char *argv[] ){
 	}	
 */
 //	Th.out_kcell(fnout2);
-
 
 void SHEET:: init(int N){
 
