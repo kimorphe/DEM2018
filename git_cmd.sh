@@ -31,6 +31,9 @@ git add Texture/Inputs/wall.dat
 git add Texture/Inputs/paint.inp
 git add Texture/Inputs/xrd.inp
 
+git add Texture/RWK/*.cpp
+git add Texture/RWK/*.h
+
 git add Texture/x240.dat
 git add Texture/x250.dat
 

@@ -6,7 +6,7 @@
 # Output data folder
 ../
 # Particle motion data files x***.dat (file numbers: n1,n2,n_inc)
- 210 250 10
+ 240 250 10
 # output file (prefix, extention)
 k
 dat

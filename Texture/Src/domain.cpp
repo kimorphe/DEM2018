@@ -50,6 +50,8 @@ void Dom2D :: out_kcell(char *fname){
 	fprintf(fp," %lf %lf\n",Xa[0],Xa[1]);
 	fprintf(fp,"# Xb[0], Xb[1]\n");
 	fprintf(fp," %lf %lf\n",Xb[0],Xb[1]);
+	fprintf(fp,"#iprd[0],iprd[1]\n");
+	fprintf(fp,"%d %d\n",iprd[0],iprd[1]);
 	fprintf(fp,"# Ndiv[0], Ndiv[1]\n");
 	fprintf(fp,"%d %d\n",Ndiv[0],Ndiv[1]);
 	fprintf(fp,"# kcell[i][j]\n");

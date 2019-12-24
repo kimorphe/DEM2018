@@ -182,6 +182,8 @@ void DEM_DATA::paint(Dom2D &dom){
 	dom.Xb[1]=Xb[1];
 	dom.time=time;
 	dom.set_dx();
+	dom.iprd[0]=1;
+	dom.iprd[1]=1;
 
 	dom.show_size();
 
