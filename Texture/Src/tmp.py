@@ -54,14 +54,14 @@ if __name__=="__main__":
     ax=fig.add_subplot(111)
 
     nums=range(0,251,10);
-    nums=[240]
+    nums=[240,250]
 
     K=KCELL();
     for k in nums:
-        fname="k"+str(k)+"s.dat"
+        fname="x"+str(k)+".rho"
         K.load(fname);
         K.show(ax)
-        fnimg=fname.replace(".dat",".png");
+        fnimg=fname.replace(".rho","_rho.png");
         print(fname+" --->"+fnimg)
         K.export(fig,fnimg)
     

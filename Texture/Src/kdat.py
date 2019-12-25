@@ -33,7 +33,7 @@ class Kdat:
     def show(self,ax):
         Ka=self.Ka;
         Kb=self.Kb;
-        im=ax.imshow(np.abs(self.Z),origin="lower",extent=[Ka[0],Kb[0],Ka[1],Kb[1]],interpolation="bilinear",cmap="jet",vmin=0,vmax=0.005);
+        im=ax.imshow(np.abs(self.Z),origin="lower",extent=[Ka[0],Kb[0],Ka[1],Kb[1]],interpolation="bilinear",cmap="jet",vmin=0,vmax=0.02);
         #im=ax.imshow(np.abs(self.Z),origin="lower",extent=[Ka[0],Kb[0],Ka[1],Kb[1]],interpolation="bilinear",cmap="jet")
         #plt.colorbar(im)
 

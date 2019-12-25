@@ -57,8 +57,127 @@ class DEM_DATA{
 
 		int nst; 
 		int npt;
+		void write_normal(char fname[128]);
 	private:
 };
+class FIELD{
+	public:
+		int Ndiv[2];
+		double Xa[2],Xb[2],Wd[2],dx[2];
+		double **dat;
+		void init(int nx, int ny);
+		void set_dx();
+		void set_lims(double xa[2], double xb[2]);
+		void print();
+		void fwrite(char *fname);
+		void eval_rhox(PRTCL *PT, int npt);
+	private:
+		void mem_alloc();
+};
+void FIELD::eval_rhox(PRTCL *PT,int npt){
+	int ipt,i,j, ix,iy;
+	double xx,yy;
+	int i1,i2,j1,j2;
+	double sig3=4.0;
+	double sig=sig3/3.0;
+	double argx,argy,rx,ry,wgt;
+	for(ipt=0; ipt<npt; ipt++){
+		xx=PT[ipt].x[0];
+		yy=PT[ipt].x[1];
+		i1=int((xx-sig3-Xa[0])/dx[0]);
+		i2=int((xx+sig3-Xa[0])/dx[0]);
+		j1=int((yy-sig3-Xa[1])/dx[1]);
+		j2=int((yy+sig3-Xa[1])/dx[1]);
+		for(i=i1; i<=i2; i++){
+			rx=Xa[0]+dx[0]*i-xx;
+			argx=rx/sig;
+			argx*=argx;
+			ix=i;
+			while(ix<0) ix+=Ndiv[0];
+			while(ix>=Ndiv[0]) ix-=Ndiv[0];
+		for(j=j1; j<=j2; j++){
+			ry=Xa[1]+dx[1]*j-yy;
+			argy=ry/sig;
+			argy*=argy;
+			wgt=exp(-0.5*(argx+argy));
+			iy=j;
+			while(iy<0) iy+=Ndiv[1];
+			while(iy>=Ndiv[1]) iy-=Ndiv[1];
+			dat[ix][iy]+=wgt;
+		}
+		}
+
+		//ix=floor(xx-Xa[0])/dx[0];
+		//iy=floor(yy-Xa[1])/dx[1];
+		//dat[ix][iy]+=1.0;
+	}
+};
+void FIELD::init(int nx,int ny){
+	Ndiv[0]=nx;
+	Ndiv[1]=ny;
+	mem_alloc();
+};
+void FIELD::set_dx(){
+	int i;
+	for(i=0;i<2;i++){
+		Wd[i]=Xb[i]-Xa[i];
+		dx[i]=Wd[i]/Ndiv[i];
+	}
+};
+void FIELD::fwrite(char *fname){
+	FILE *fp=fopen(fname,"w");
+	int i,j;
+	fprintf(fp,"# time\n");
+	fprintf(fp," 0.0\n");
+	fprintf(fp,"# Xa[0], Xa[1]\n");
+	fprintf(fp,"%lf %lf\n",Xa[0],Xa[1]);
+	fprintf(fp,"# Xb[0], Xb[1]\n");
+	fprintf(fp,"%lf %lf\n",Xb[0],Xb[1]);
+	fprintf(fp,"# Ndiv[0], Ndiv[1]\n");
+	fprintf(fp,"%d %d\n",Ndiv[0],Ndiv[1]);
+	fprintf(fp,"# dat[i][j]\n");
+	for(i=0;i<Ndiv[0];i++){
+	for(j=0;j<Ndiv[1];j++){
+		fprintf(fp,"%lf\n",dat[i][j]);
+	}
+	}
+	fclose(fp);
+
+};
+void FIELD::mem_alloc(){
+	int ndat=Ndiv[0]*Ndiv[1];
+	double *pt=(double *)malloc(sizeof(double)*ndat);
+	dat=(double **)malloc(sizeof(double *)*Ndiv[0]);
+	for(int i=0;i<Ndiv[0];i++) dat[i]=pt+i*Ndiv[1];
+	for(int i=0;i<ndat;i++) pt[i]=0.0;
+};
+void FIELD::set_lims(double xa[2], double xb[2]){
+	for( int i=0;i<2;i++){
+		Xa[i]=xa[i];
+		Xb[i]=xb[i];
+	}
+	FIELD::set_dx();
+};
+
+void SHEET:: init(int N){
+
+	Np=N;
+	list=(int *)malloc(sizeof(int)*Np);
+};
+void PRTCL::init(){
+	x[0]=0.0; x[1]=0.0;
+	v[0]=0.0; v[1]=0.0;
+	irev[0]=0; irev[1]=0;
+	F[0]=0.0; F[1]=0.0;
+	m=1.0;	// mass
+	mobile=1;	// set to "mobile" mode
+}; 
+
+void PRTCL::setX(double x1, double x2){
+	x[0]=x1;
+	x[1]=x2;
+};
+
 
 void DEM_DATA::load_dem_inp(char fname[128]){
 	char cbff[128];
@@ -173,6 +292,15 @@ void DEM_DATA::spline_fit(bool init){
 	}
 	}
 };
+
+void DEM_DATA::write_normal(char fname[128]){
+	FILE *fp=fopen(fname,"w");
+	int i;
+	for(i=0;i<npt;i++){
+		fprintf(fp,"%lf %lf\n",PT[i].n[0],PT[i].n[1]);
+	};
+	fclose(fp);
+};
 void DEM_DATA::paint(Dom2D &dom){
 	int i,j;
 	double x1[2],x2[2];
@@ -185,7 +313,41 @@ void DEM_DATA::paint(Dom2D &dom){
 	dom.iprd[0]=1;
 	dom.iprd[1]=1;
 
-	dom.show_size();
+
+	int Ns;
+	double ds,ss,tt,xx,yy,dxds,dyds;
+	Vec2 tb,nb;
+	for(i=0;i<nst;i++){
+		Ns=crvs[i].np*100;
+		ds=double(crvs[i].np-1)/(Ns-1);
+		for(j=0;j<Ns;j++){
+			ss=ds*j;
+			xx=crvs[i].intplx(ss); 
+			yy=crvs[i].intply(ss);
+			dxds=crvs[i].dxds(ss);
+			dyds=crvs[i].dyds(ss);
+			tb.set(dxds,dyds);	// tangential vector
+			tt=tb.len();
+			tb.div(tt);	// unit tangential vector
+			nb.set(-tb.x[1],tb.x[0]);	// unit normal vector
+/*
+			sigp=hgts[i].intplx(ss)*0.5;
+			sigm=hgts[i].intply(ss)*0.5;
+			x1[0]=xx+nb.x[0]*sigp;
+			x1[1]=yy+nb.x[1]*sigp;
+			x2[0]=xx-nb.x[0]*sigm;
+			x2[1]=yy-nb.x[1]*sigm;
+			dom.draw_line(x1,x2,1,1); // paint pore water (fluid phase)
+*/
+
+			x1[0]=xx+nb.x[0]*0.40;
+			x1[1]=yy+nb.x[1]*0.40;
+			x2[0]=xx-nb.x[0]*0.40;
+			x2[1]=yy-nb.x[1]*0.40;
+			dom.draw_line(x1,x2,2,1); // paint clay sheet (solid phase)
+		};
+	};
+
 
 	for(i=0;i<nst;i++){
 	for(j=0;j<st[i].Np-1;j++){
@@ -289,6 +451,8 @@ int main(int argc, char *argv[] ){
 	char fnout2[128]; // output file (2D FFT) 
 	char fnout3[128]; // output file (XRD pattern)
 	char fnout4[128]; // output file (Radial distribution function)
+	char fnout5[128]; // output file (normal vector)
+	char fnout6[128]; // output file (local number density)
 	char fndem[128]; // "folder/dem.inp" (DEM main input)
 	char fnsht[128]; // "folder/sheet.dat" (Clay sheet data)
 	char fndat[128]; // "folder/x***.dat" (particle data file)
@@ -331,6 +495,8 @@ int main(int argc, char *argv[] ){
 	DM.load_dem_inp(fndem);	// load DEM parameters
 	DM.load_sheet_data(fnsht); //load DEM sheet data 
 	Dom2D dom(Ndiv[0],Ndiv[1]); // domain class to manipulate image data
+	FIELD rho;
+	rho.init(128,128);
 	bool init=true,iso=false;
 	for(int nf=nf1;nf<=nf2;nf+=nf_inc){
 		//	FILE NAMES
@@ -339,11 +505,18 @@ int main(int argc, char *argv[] ){
 		sprintf(fnout2,"%s%s%d.%s",dir_out,head,nf,"fft"); // FFT wave number spectrum 
 		sprintf(fnout3,"%s%s%d.%s",dir_out,head,nf,"xrd"); // XRD Intensity plot 
 		sprintf(fnout4, "%sx%d.%s",dir_out,nf,"rad"); // XRD Intensity plot 
+		sprintf(fnout5, "%sx%d.%s",dir_out,nf,"nml"); // normal vector 
+		sprintf(fnout6, "%sx%d.%s",dir_out,nf,"rho"); // local number density 
 		printf("%s --> %s\n",fndat,fnout1); // Input,Output data files
 
 		DM.load_ptc_data(fndat,init);	// load particle snapshot data
 		DM.spline_fit(init);		// generate spline curves
+		DM.write_normal(fnout5);
 		init=false;
+
+		rho.set_lims(DM.Xa,DM.Xb);
+		rho.eval_rhox(DM.PT,DM.npt);
+		rho.fwrite(fnout6);
 
 		DM.paint(dom);	// convert particle to image data
 		dom.FFT2D();	// Perform 2D FFT
@@ -352,90 +525,9 @@ int main(int argc, char *argv[] ){
 		dom.XRD(fnout3);// synthesize XRD pattern by sampling FFT wave number spectrum 
 
 		//xrd_sum(DM.PT,DM.npt);
-		//Wd[0]=dom.Xb[0]-dom.Xa[0];
-		//Wd[1]=dom.Xb[1]-dom.Xa[1];
 		two_body_cor(DM.PT,DM.npt,DM.Wd,fnout4,iso); // radial distribution functioin
-
+		
 		dom.clear_kcell();	// clear image data
 	}
 	return(0);
 }
-/*
-	double ss,ds;
-	int Ns;
-	double dxds,dyds,sigp,sigm;
-	Vec2 tb,nb;
-	double th_n; 
-	int ix,iy,indx[2];
-	for(i=0;i<nst;i++){
-		Ns=crvs[i].np*100;
-		ds=double(crvs[i].np-1)/(Ns-1);
-		for(j=0;j<Ns;j++){
-			ss=ds*j;
-			xx=crvs[i].intplx(ss); 
-			yy=crvs[i].intply(ss);
-			dxds=crvs[i].dxds(ss);
-			dyds=crvs[i].dyds(ss);
-
-			tb.set(dxds,dyds);	// tangential vector
-			tt=tb.len();
-			tb.div(tt);	// unit tangential vector
-			nb.set(-tb.x[1],tb.x[0]);	// unit normal vector
-			//nb.times(sig);
-			//printf("%lf %lf %lf\n",xx,yy,ss);
-			sigp=hgts[i].intplx(ss)*0.5;
-			sigm=hgts[i].intply(ss)*0.5;
-			x1[0]=xx+nb.x[0]*sigp;
-			x1[1]=yy+nb.x[1]*sigp;
-			x2[0]=xx-nb.x[0]*sigm;
-			x2[1]=yy-nb.x[1]*sigm;
-			dom.draw_line(x1,x2,1,1); // paint pore water (fluid phase)
-
-			x1[0]=xx+nb.x[0]*0.45;
-			x1[1]=yy+nb.x[1]*0.45;
-			x2[0]=xx-nb.x[0]*0.45;
-			x2[1]=yy-nb.x[1]*0.45;
-			dom.draw_line(x1,x2,2,1); // paint clay sheet (solid phase)
-
-			if(nb.x[0] > 1.0) nb.x[0]=1.0;
-			if(nb.x[0] <-1.0) nb.x[0]=-1.0;
-			th_n=acos(nb.x[0])/pi*180.0;
-			if(nb.x[1]<0.0) th_n=360.0-th_n;
-			Th.xy2ij(xx,yy,indx);
-			Th.kcell[indx[0]][indx[1]]=(int(th_n)%180);
-		};
-	};
-	for(i=0;i<nst;i++){
-	for(j=0;j<st[i].Np-1;j++){
-		x1[0]=crvs[i].x[j];
-		x1[1]=crvs[i].y[j];
-		x2[0]=crvs[i].x[j+1];
-		x2[1]=crvs[i].y[j+1];	
-		dom.draw_line(x1,x2,2,1); // paint clay sheet (solid phase)
-	}
-	}	
-*/
-//	Th.out_kcell(fnout2);
-
-void SHEET:: init(int N){
-
-	Np=N;
-	list=(int *)malloc(sizeof(int)*Np);
-};
-
-void PRTCL::init(){
-	x[0]=0.0; x[1]=0.0;
-	v[0]=0.0; v[1]=0.0;
-	irev[0]=0; irev[1]=0;
-	F[0]=0.0; F[1]=0.0;
-	m=1.0;	// mass
-	mobile=1;	// set to "mobile" mode
-}; 
-
-void PRTCL::setX(double x1, double x2){
-
-	x[0]=x1;
-	x[1]=x2;
-
-};
-

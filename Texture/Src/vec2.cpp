@@ -17,6 +17,8 @@ Vec2 Vec2::times(double s){
 Vec2 Vec2::div(double s){
 	Vec2 v;
 	v.set(x[0]/s, x[1]/s);
+	x[0]/=s;
+	x[1]/=s;
 	return(v);
 };
 double Vec2::len(){

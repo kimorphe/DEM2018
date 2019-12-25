@@ -14,6 +14,8 @@ class KCELL:
         fp.readline(); # computational domain
         Xb=list(map(float,fp.readline().lstrip().split(" ")));
         fp.readline(); # computational domain
+        iprd=list(map(int,fp.readline().lstrip().split(" ")));
+        fp.readline();	# Imaging area
         Ndiv=list(map(int,fp.readline().lstrip().split(" ")));
         fp.readline();	# Imaging area
 
@@ -32,7 +34,7 @@ class KCELL:
             plt.cla()
         Xa=self.Xa;
         Xb=self.Xb;
-        im=ax.imshow(self.K,origin="lower",extent=[Xa[0],Xb[0],Xa[1],Xb[1]],interpolation="bilinear",vmin=0,vmax=2)
+        im=ax.imshow(self.K,origin="lower",extent=[Xa[0],Xb[0],Xa[1],Xb[1]],interpolation="none",vmin=0,vmax=2)
         ax.set_xlabel("x [nm]");
         ax.set_ylabel("y [nm]");
         if self.nshow==0:

@@ -8,6 +8,8 @@ class Cell{
 	public:
 		int cnct[4];//connected ?
 		Cell *cncl[4]; //pointer to connected cells
+		int incx[4];
+		int incy[4];
 		int nc;	// number  of connected cells
 		Cell();	// constructuor
 		bool bnd; // boundary cell (T/F)
@@ -55,6 +57,9 @@ class Dom2D{
 		int nwk;
 		cWalker *wks;
 		void init_walkers(int n);
+		void rwk();
+		void write_rwks(char *fname);
+		double rwk_MSD();
 	private:
 		void mem_alloc();
 };
@@ -67,8 +72,51 @@ void show_msg(char *fname){
 
 Cell::Cell(){};
 
-
 //-------------Dom2D Class ------------------
+double Dom2D:: rwk_MSD(){
+	int i,ID,ix,iy;
+	double ux,uy;
+	double u2b=0.0,v2b=0.0,ub=0.0,vb=0.0;
+	Cell *cl;
+	for(i=0;i<nwk;i++){
+		cl=wks[i].cl0;
+		ID=cl->ID;
+		ix=int(ID/Ndiv[1]);
+		iy=ID%Ndiv[1];
+
+		ix+=(wks[i].ofx*Ndiv[0]);
+		iy+=(wks[i].ofy*Ndiv[1]);
+		ix-=wks[i].ix0;
+		iy-=wks[i].iy0;
+
+		ux=Xa[0]+dx[0]*ix;
+		uy=Xa[1]+dx[1]*iy;
+
+		ub+=ux;
+		vb+=uy;
+		u2b+=(ux*ux);
+		v2b+=(uy*uy);
+	}
+	ub/=nwk;
+	vb/=nwk;
+
+	u2b/=nwk;
+	v2b/=nwk;
+	u2b-=(ub*ub);
+	v2b-=(vb*vb);
+	return(0.5*(u2b+v2b));
+};
+void Dom2D:: rwk(){
+	static std::mt19937_64 eng(-2);
+	std::uniform_int_distribution<int>irnd(0,3);
+	int i,next;
+	for(i=0;i<nwk;i++){
+		next=irnd(eng);
+		wks[i].ofx+=wks[i].cl0->incx[next];
+		wks[i].ofy+=wks[i].cl0->incy[next];
+		wks[i].cl0=wks[i].cl0->cncl[next];
+	}
+};
 void Dom2D:: init_walkers(int n){
 
 	std::mt19937_64 eng(-2);
@@ -79,8 +127,11 @@ void Dom2D:: init_walkers(int n){
 	int ID;
 	for(int i=0;i<nwk;i++){
 	       	wks[i].cl0=cl+irnd(eng);
+		wks[i].ofx=0;
+		wks[i].ofy=0;
 		ID=wks[i].cl0->ID;
-		printf("%d %d\n",int(ID/Ndiv[1]),ID%Ndiv[1]);
+		wks[i].ix0=ID/Ndiv[1];
+		wks[i].iy0=ID%Ndiv[1];
 	}
 
 };
@@ -121,17 +172,37 @@ void Dom2D::connect_cells(){
 		i=floor(cll.ID/Ndiv[1]);
 		j=cll.ID%Ndiv[1];
 		cl[ic].nc=0;
+
 		for(k=0;k<4;k++){
+			cl[ic].incx[k]=0; 
+			cl[ic].incy[k]=0;
 			id=i+ofsti[k];
 			jd=j+ofstj[k];
 			cl[ic].cncl[k]=cl+ic;
-			while(id <0) id+=Ndiv[0];
-			while(id >= Ndiv[0]) id-=Ndiv[0];
-			while(jd <0) jd+=Ndiv[1];
-			while(jd >= Ndiv[1]) jd-=Ndiv[1];
+			while(id <0){
+				id+=Ndiv[0];
+				cl[ic].incx[k]--;
+			}
+			while(id >= Ndiv[0]){
+			       id-=Ndiv[0];
+			       cl[ic].incx[k]++;
+			}
+			while(jd <0){
+				jd+=Ndiv[1];
+				cl[ic].incy[k]--;
+			}
+			while(jd >= Ndiv[1]){
+			       	jd-=Ndiv[1];
+				cl[ic].incy[k]++;
+			}
 
-			if(kcell[id][jd]!=0) continue;
-			iad=find_cell(cll.ID);
+			if(kcell[id][jd]!=0){
+				cl[ic].incx[k]=0;
+				cl[ic].incy[k]=0;
+			       	continue;
+			}
+			//if(cl[ic].incy[k]!=0) printf("incy=%d\n",cl[ic].incy[k]);
+			iad=find_cell(id*Ndiv[1]+jd);
 			if(iad==-1) continue;
 			cl[ic].cncl[k]=cl+iad;
 			cl[ic].nc++;
@@ -312,6 +383,20 @@ double indx2cod(int indx,double Xa, double dx){
 	return((indx+0.5)*dx+Xa);
 };
 */
+void Dom2D::write_rwks(char *fname){
+	FILE *fp=fopen(fname,"w");
+	int i,ix,iy,ID;
+	for(i=0;i<nwk;i++){
+		ID=wks[i].cl0->ID;
+		ix=ID/Ndiv[1]+wks[i].ofx*Ndiv[0];;
+		iy=(ID%Ndiv[1]);
+		iy+=wks[i].ofy*Ndiv[1];
+//		if(wks[i].ofy!=0) printf("ofy=%d\n",wks[i].ofy);
+//		if(wks[i].ofx!=0) printf("ofx=%d\n",wks[i].ofx);
+		fprintf(fp,"%d %d\n",ix,iy);
+	};
+	fclose(fp);
+};
 
 //----------------------------------------------------------
 int main(){
@@ -321,7 +406,21 @@ int main(){
 	dom.setup_cells();
 	printf("ncell=%d\n",dom.ncell);
 	dom.connect_cells();
-	dom.init_walkers(100);
+	dom.init_walkers(1000);
+
+	int i,ID;
+	int Nt=2000;
+
+	sprintf(fname,"rwk0.out");
+	dom.write_rwks(fname);
+	for(i=0;i<Nt;i++){
+		dom.rwk();
+		ID=dom.wks[0].cl0->ID;
+//		printf("%d %d\n",ID/dom.Ndiv[1],ID%dom.Ndiv[1]);
+		printf("%lf\n",dom.rwk_MSD());
+	}
+	sprintf(fname,"rwk.out");
+	dom.write_rwks(fname);
 
 	return(0);
 };

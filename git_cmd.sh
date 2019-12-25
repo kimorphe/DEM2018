@@ -33,6 +33,7 @@ git add Texture/Inputs/xrd.inp
 
 git add Texture/RWK/*.cpp
 git add Texture/RWK/*.h
+git add Texture/RWK/makefile
 
 git add Texture/x240.dat
 git add Texture/x250.dat
