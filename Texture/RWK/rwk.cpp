@@ -1,7 +1,32 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h> 
+#include<random>
 
+
+class Cell{
+	public:
+		int cnct[4];//connected ?
+		Cell *cncl[4]; //pointer to connected cells
+		int nc;	// number  of connected cells
+		Cell();	// constructuor
+		bool bnd; // boundary cell (T/F)
+		int ID;		// linear index for 2D Grid
+		int iad;	// address in PoreCells[ncell]
+		int phs;	// 0=gas, 1=fluid, 2=solid 
+		int phs_bff;
+	private:
+};
+class cWalker{
+	public:
+		Cell *cl0;
+		double x0,y0;
+		double xn,yn;
+		int ix,iy;
+		int ix0,iy0;
+		int ofx,ofy;
+	private:
+};
 //-------------Dom2D Class ------------------
 class Dom2D{
 	public:
@@ -20,25 +45,124 @@ class Dom2D{
 		double time;	// time (ps) in DEM simulation
 		void set_val(int val);
 		void xy2ij(double x, double y, int indx[2]);
+
+		int ncell;
+		Cell *cl;
+		void setup_cells();
+		void connect_cells();
+		int find_cell(int ID);
+
+		int nwk;
+		cWalker *wks;
+		void init_walkers(int n);
 	private:
 		void mem_alloc();
 };
-
-
-int main(){
-	char fname[128]="k240.dat";
-	FILE *fp;
-	Dom2D dom(fname);
-	return(0);
-};
-
-
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 void show_msg(char *fname){
 	printf("Can't find '%s'\n",fname);
 	printf(" --> process terminated.");
 	exit(-1);
 }
+
+Cell::Cell(){};
+
+
 //-------------Dom2D Class ------------------
+void Dom2D:: init_walkers(int n){
+
+	std::mt19937_64 eng(-2);
+	std::uniform_int_distribution<int>irnd(0,ncell-1);
+	nwk=n;	// number of random walkers
+	wks=(cWalker *)malloc(sizeof(cWalker)*nwk);
+
+	int ID;
+	for(int i=0;i<nwk;i++){
+	       	wks[i].cl0=cl+irnd(eng);
+		ID=wks[i].cl0->ID;
+		printf("%d %d\n",int(ID/Ndiv[1]),ID%Ndiv[1]);
+	}
+
+};
+void Dom2D:: setup_cells(){
+	int i,j,k,id;
+	ncell=0;
+	for(i=0; i<Ndiv[0]; i++){
+	for(j=0; j<Ndiv[0]; j++){
+		if(kcell[i][j]==0) ncell++;
+	}
+	}
+
+	cl=(Cell *)malloc(sizeof(Cell)*ncell);
+
+	id=0;
+	k=0;
+	for(i=0; i<Ndiv[0]; i++){
+	for(j=0; j<Ndiv[0]; j++){
+		if(kcell[i][j]==0){
+			cl[id].iad=id++;
+			cl[id].ID=k;
+			cl[id].phs=0;	// fluid phase 
+		}	
+		k++;
+	}
+	}
+}
+void Dom2D::connect_cells(){
+	int i,j,k,ic;
+	int id,jd;
+	int iad;
+	int ofsti[4]={ 0,1,0,-1};
+	int ofstj[4]={-1,0,1, 0};
+	Cell cll; 
+
+	for(ic=0;ic<ncell;ic++){	// Cells
+		cll=cl[ic];
+		i=floor(cll.ID/Ndiv[1]);
+		j=cll.ID%Ndiv[1];
+		cl[ic].nc=0;
+		for(k=0;k<4;k++){
+			id=i+ofsti[k];
+			jd=j+ofstj[k];
+			cl[ic].cncl[k]=cl+ic;
+			while(id <0) id+=Ndiv[0];
+			while(id >= Ndiv[0]) id-=Ndiv[0];
+			while(jd <0) jd+=Ndiv[1];
+			while(jd >= Ndiv[1]) jd-=Ndiv[1];
+
+			if(kcell[id][jd]!=0) continue;
+			iad=find_cell(cll.ID);
+			if(iad==-1) continue;
+			cl[ic].cncl[k]=cl+iad;
+			cl[ic].nc++;
+		}
+		
+	};
+
+};
+
+int Dom2D::find_cell(int ID){
+
+	int i1,i2,im;
+	i1=0;
+	i2=ncell-1;
+	if(ID<cl[i1].ID) return(-1);
+	if(ID>cl[i2].ID) return(-1);
+
+
+	if(ID == cl[i1].ID) return(i1);
+	if(ID == cl[i2].ID) return(i2);
+	while(i2-i1>1){
+		im=int(0.5*(i1+i2));
+		if(ID ==cl[im].ID) return(im);
+		if(ID < cl[im].ID){
+			i2=im;
+		}else{
+			i1=im;
+		}	
+	};
+	return(-1);
+};
 int Dom2D :: count(int iphs){
 	int i,j,isum=0;
 	for(i=0;i<Ndiv[0];i++){
@@ -189,4 +313,16 @@ double indx2cod(int indx,double Xa, double dx){
 };
 */
 
+//----------------------------------------------------------
+int main(){
+	char fname[128]="k240.dat";
+	FILE *fp;
+	Dom2D dom(fname);
+	dom.setup_cells();
+	printf("ncell=%d\n",dom.ncell);
+	dom.connect_cells();
+	dom.init_walkers(100);
+
+	return(0);
+};
 
