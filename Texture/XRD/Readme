@@ -1,0 +1,7 @@
+DEM postprocessing
+
+1) Particle model is approximated by spline curves
+2) Particle set data are converted to an image
+3) Useful operations such as 2D FFT and local density estimation
+ are made available for the texture analysis of meso-scale DEM clay model.
+  

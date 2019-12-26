@@ -20,23 +20,17 @@ git add Kcell/sheet.dat
 # Python Codes
 git add Pycodes/
 # Codes & Data for Texture Analysis
-git add Texture/Src/*.cpp
-git add Texture/Src/*.h
-git add Texture/Src/*.py
-git add Texture/Src/makefile
-
-git add Texture/Inputs/dem.inp
-git add Texture/Inputs/gen_sheet.inp
-git add Texture/Inputs/wall.dat
-git add Texture/Inputs/paint.inp
-git add Texture/Inputs/xrd.inp
-
+git add Texture/Pycodes
+git add Texture/XRD/*.cpp
+git add Texture/XRD/*.h
+git add Texture/XRD/makefile
+git add Texture/XRD/Readme
+git add Texture/XRD/Input
+## Random Walk
 git add Texture/RWK/*.cpp
 git add Texture/RWK/*.h
 git add Texture/RWK/makefile
-
-git add Texture/x240.dat
-git add Texture/x250.dat
+git add Texture/RWK/Input
 
 git commit 
 
