@@ -62,7 +62,7 @@ if __name__=="__main__":
     ax3.grid(True)
     r_max=15.0;
     ax3.set_xlabel(r'normal direction [deg]',fontsize=14);
-    ax3.set_ylabel("density",fontsize=14);
+    ax3.set_ylabel("probability density",fontsize=14);
     ax3.tick_params(labelsize=14)
 
     nr=XRD();

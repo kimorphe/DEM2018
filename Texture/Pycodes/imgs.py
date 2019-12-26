@@ -35,8 +35,9 @@ class KCELL:
         Xa=self.Xa;
         Xb=self.Xb;
         im=ax.imshow(self.K,origin="lower",extent=[Xa[0],Xb[0],Xa[1],Xb[1]],interpolation="none",vmin=0,vmax=2)
-        ax.set_xlabel("x [nm]");
-        ax.set_ylabel("y [nm]");
+        ax.set_xlabel("x [nm]",fontsize=12);
+        ax.set_ylabel("y [nm]",fontsize=12);
+        ax.tick_params(labelsize=12)
         #if self.nshow==0:
         if self.nshow>=0:
             #plt.colorbar(im);
@@ -57,9 +58,11 @@ if __name__=="__main__":
 
     nums=range(0,251,10);
 
+    head="kw"   # fluid pahse shown
+    head="k"    # fluid phase not shown 
     K=KCELL();
     for k in nums:
-        fname="k"+str(k)+".dat"
+        fname=head+str(k)+".dat"
         K.load(fname);
         K.show(ax)
         fnimg=fname.replace(".dat",".png");

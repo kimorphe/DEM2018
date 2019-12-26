@@ -36,16 +36,22 @@ class Kdat:
     def show(self,ax):
         Ka=self.Ka;
         Kb=self.Kb;
-        im=ax.imshow(np.abs(self.Z),origin="lower",extent=[Ka[0],Kb[0],Ka[1],Kb[1]],interpolation="bilinear",cmap="jet",vmin=0,vmax=0.02);
+        #kb=np.mean(np.abs(self.Z[:,:]))
+        #ks=np.std(np.abs(self.Z[:,:]))
+        kmax=np.max(np.abs(self.Z[:,:]))
+        #print(kb,ks,kmax)
+        im=ax.imshow(np.abs(self.Z),origin="lower",extent=[Ka[0],Kb[0],Ka[1],Kb[1]],interpolation="bilinear",cmap="jet",vmin=0,vmax=kmax*0.05);
         #im=ax.imshow(np.abs(self.Z),origin="lower",extent=[Ka[0],Kb[0],Ka[1],Kb[1]],interpolation="bilinear",cmap="jet")
         #plt.colorbar(im)
         if self.nshow==0:
             self.Ka0=Ka;
             self.Kb0=Kb;
-            ax.set_xlabel("$k_x$ [/nm]")
-            ax.set_ylabel("$k_y$ [/nm]")
+            ax.set_xlabel("$k_x$ [nm$^{-1}$]",fontsize=12)
+            ax.set_ylabel("$k_y$ [nm$^{-1}$]",fontsize=12)
         ax.set_xlim([self.Ka0[0],self.Kb0[0]])
         ax.set_ylim([self.Ka0[1],self.Kb0[1]])
+        ax.set_title(self.fname)
+        ax.tick_params(labelsize=12)
 
         self.nshow+=1
 
@@ -61,9 +67,11 @@ if __name__=="__main__":
     nums=range(0,251,10)
     for k in nums:
         fname="k"+str(k)+".fft"
+        print(fname)
         Dat.load(fname);
         Dat.show(ax)
         fname_out="fft"+str(k)+".png"
         fig.savefig(fname_out,bbox_inches="tight")
+
 
     #plt.show()

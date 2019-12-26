@@ -42,7 +42,7 @@ class KCELL:
             plt.cla()
         Xa=self.Xa;
         Xb=self.Xb;
-        im=ax.imshow(self.K,origin="lower",extent=[Xa[0],Xb[0],Xa[1],Xb[1]],interpolation="bilinear",cmap="jet") #,vmin=0,vmax=2)
+        im=ax.imshow(self.K,origin="lower",extent=[Xa[0],Xb[0],Xa[1],Xb[1]],interpolation="bilinear",cmap="jet",vmin=0,vmax=1.0)
         #im=ax.imshow(self.K,origin="lower",extent=[Xa[0],Xb[0],Xa[1],Xb[1]],interpolation="none",cmap="gray");
         ax.set_xlabel("x [nm]");
         ax.set_ylabel("y [nm]");
@@ -52,7 +52,10 @@ class KCELL:
             self.Xb0=Xb;
         ax.set_xlim((self.Xa0[0],self.Xb0[0]))
         ax.set_ylim((self.Xa0[1],self.Xb0[1]))
-        ax.set_title(self.fname+", t="+str(self.time)+"[ps]")
+        ax.set_title(self.fname)
+        ax.set_xlabel("x [nm]",fontsize=12)
+        ax.set_ylabel("y [nm]",fontsize=12)
+        ax.tick_params(labelsize=12)
         self.nshow+=1;
     def export(self,fig,fname):
         fig.savefig(fname,bbox_inches="tight")
@@ -79,5 +82,10 @@ if __name__=="__main__":
         fname="x"+str(k)+".rho"
         K.load(fname);
         bx.plot(K.bins,K.count)
+    bx.set_ylim([0,10])
+    bx.set_xlabel(r"number density of particles [nm$^{-2}$]",fontsize=14)
+    bx.set_ylabel(r"probability density",fontsize=14)
+    bx.tick_params(labelsize=14)
+    fig2.savefig("rhox.png",bbox_inches="tight")
 
     plt.show();
